@@ -28,11 +28,17 @@ const connectDB = async () => {
 };
 
 // Routes
-const productRoutes = require('./routes/products'); // Renamed productsRouter to productRoutes
-const uploadRoutes = require('./routes/upload'); // Added upload routes
+const productRoutes = require('./routes/products');
+const uploadRoutes = require('./routes/upload');
+const categoryRoutes = require('./routes/categories');
+const quoteRoutes = require('./routes/quotes');
+const contactRoutes = require('./routes/contacts');
 
-app.use('/api/products', productRoutes); // Using productRoutes
-app.use('/api/upload', uploadRoutes); // Added upload routes
+app.use('/api/products', productRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/quotes', quoteRoutes);
+app.use('/api/contacts', contactRoutes);
 
 
 // Health check

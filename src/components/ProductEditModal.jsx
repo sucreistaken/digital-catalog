@@ -44,6 +44,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
     const [selectedColorVariant, setSelectedColorVariant] = useState(null);
     const [currentHue, setCurrentHue] = useState(0);
     const [currentSaturation, setCurrentSaturation] = useState(100);
+    const [isEditingExistingVariant, setIsEditingExistingVariant] = useState(false);
 
     // Size variants state
     const [sizeVariants, setSizeVariants] = useState(defaultSizeVariants);
@@ -112,12 +113,23 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
 
     // Select a base color from the palette
     const handleBaseColorSelect = (colorId) => {
+        // If clicking the same color that's already selected, deselect it
+        if (selectedColorVariant?.colorId === colorId) {
+            setSelectedColorVariant(null);
+            setCurrentHue(0);
+            setCurrentSaturation(100);
+            setIsEditingExistingVariant(false);
+            return;
+        }
+
         // Check if this color already has a variant
         const existingVariant = colorVariants.find(v => v.colorId === colorId);
         if (existingVariant) {
+            // Editing existing variant
             setSelectedColorVariant(existingVariant);
             setCurrentHue(existingVariant.hue);
             setCurrentSaturation(existingVariant.saturation);
+            setIsEditingExistingVariant(true);
         } else {
             // Create a new variant with default values
             const colorInfo = colors.find(c => c.id === colorId);
@@ -132,6 +144,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             setSelectedColorVariant(newVariant);
             setCurrentHue(newVariant.hue);
             setCurrentSaturation(newVariant.saturation);
+            setIsEditingExistingVariant(false);
         }
     };
 
@@ -162,11 +175,20 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
         setSelectedColorVariant(null);
         setCurrentHue(0);
         setCurrentSaturation(100);
+        setIsEditingExistingVariant(false);
     };
 
     // Remove a color variant
     const handleRemoveColorVariant = (variantId) => {
+        const variant = colorVariants.find(v => v.id === variantId);
         setColorVariants(prev => prev.filter(v => v.id !== variantId));
+        // If we're removing the currently selected variant, reset selection
+        if (selectedColorVariant?.id === variantId) {
+            setSelectedColorVariant(null);
+            setCurrentHue(0);
+            setCurrentSaturation(100);
+            setIsEditingExistingVariant(false);
+        }
     };
 
     // Preview a saved color variant
@@ -415,7 +437,10 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                             <div className="variant-actions">
                                                 <button className="add-color-btn" onClick={handleAddColorVariant}>
                                                     <Plus size={16} />
-                                                    "{selectedColorVariant.colorName}" Rengini Ekle
+                                                    {isEditingExistingVariant
+                                                        ? `"${selectedColorVariant.colorName}" Rengini Güncelle`
+                                                        : `"${selectedColorVariant.colorName}" Rengini Ekle`
+                                                    }
                                                 </button>
                                             </div>
                                         )}

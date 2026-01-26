@@ -1,116 +1,201 @@
-import React, { useState } from 'react';
-import { Eye, Check, X, Mail, Clock, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, Check, X, Mail, Clock, Search, Loader2, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { quotesApi } from '../../utils/api';
 import '../Dashboard.css';
-
-// Sample quote requests
-const sampleQuotes = [
-    { id: 1, name: 'Ahmed Al-Rashid', company: 'Al-Faisal Trading', email: 'ahmed@alfaisal.com', phone: '+966 50 123 4567', country: 'Saudi Arabia', products: ['FG-CH-001', 'FG-TB-001'], message: 'We are interested in bulk order for hotel project.', date: '2026-01-16', status: 'new' },
-    { id: 2, name: 'Hans Müller', company: 'Garten GmbH', email: 'hans@garten.de', phone: '+49 170 123 4567', country: 'Germany', products: ['FG-PT-001', 'FG-PT-002', 'FG-PT-003'], message: 'Looking for garden products distribution in Germany.', date: '2026-01-15', status: 'replied' },
-    { id: 3, name: '李明', company: '上海贸易公司', email: 'liming@shanghai.cn', phone: '+86 138 1234 5678', country: 'China', products: ['FG-PL-001', 'FG-SB-001'], message: 'Want to import industrial products.', date: '2026-01-14', status: 'new' },
-    { id: 4, name: 'Maria Santos', company: 'Iberia Imports', email: 'maria@iberia.es', phone: '+34 612 345 678', country: 'Spain', products: ['FG-SET-001'], message: 'Furniture sets for restaurants.', date: '2026-01-13', status: 'pending' },
-];
 
 const Quotes = () => {
     const { t } = useLanguage();
-    const [quotes, setQuotes] = useState(sampleQuotes);
+    const [quotes, setQuotes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [selectedQuote, setSelectedQuote] = useState(null);
     const [filter, setFilter] = useState('all');
 
-    const filteredQuotes = quotes.filter(q => filter === 'all' || q.status === filter);
+    // Load quotes from API
+    useEffect(() => {
+        loadQuotes();
+    }, [filter]);
 
-    const updateStatus = (id, status) => {
-        setQuotes(quotes.map(q => q.id === id ? { ...q, status } : q));
+    const loadQuotes = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await quotesApi.getAll(filter);
+            setQuotes(data);
+        } catch (err) {
+            console.error('Quotes load error:', err);
+            setError('Teklifler yüklenemedi');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateStatus = async (id, status) => {
+        try {
+            const updated = await quotesApi.update(id, { status });
+            setQuotes(quotes.map(q => q._id === id ? updated : q));
+        } catch (err) {
+            console.error('Status update error:', err);
+            alert('Durum güncellenemedi!');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (confirm('Bu teklifi silmek istediğinizden emin misiniz?')) {
+            try {
+                await quotesApi.delete(id);
+                setQuotes(quotes.filter(q => q._id !== id));
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('Teklif silinemedi!');
+            }
+        }
+    };
+
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('tr-TR', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     const statusColors = {
-        new: 'var(--color-primary)',
-        replied: 'var(--color-info)',
-        pending: 'var(--color-warning)',
-        closed: 'var(--color-text-muted)',
+        new: '#007AFF',
+        replied: '#34C759',
+        pending: '#FF9500',
+        closed: '#8E8E93',
     };
+
+    const statusLabels = {
+        new: 'Yeni',
+        replied: 'Cevaplandı',
+        pending: 'Bekliyor',
+        closed: 'Kapatıldı',
+    };
+
+    if (loading) {
+        return (
+            <div className="admin-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+                <Loader2 size={32} className="animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="admin-page">
             <header className="admin-header">
                 <div>
                     <h1 className="text-h2">{t('quoteRequests')}</h1>
-                    <p className="text-body">Manage incoming quote requests</p>
+                    <p className="text-body">Gelen teklif taleplerini yönetin</p>
                 </div>
                 <div className="status-filters">
-                    {['all', 'new', 'replied', 'pending'].map(status => (
+                    {['all', 'new', 'replied', 'pending', 'closed'].map(status => (
                         <button
                             key={status}
                             className={`filter-btn ${filter === status ? 'active' : ''}`}
                             onClick={() => setFilter(status)}
                         >
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                            {status === 'all' ? 'Tümü' : statusLabels[status]}
                         </button>
                     ))}
                 </div>
             </header>
 
-            <div className="quotes-list">
-                {filteredQuotes.map(quote => (
-                    <div key={quote.id} className="quote-card card">
-                        <div className="quote-header">
-                            <div className="quote-meta">
-                                <span className="quote-status" style={{ background: statusColors[quote.status] }}>
-                                    {quote.status}
-                                </span>
-                                <span className="quote-date"><Clock size={14} /> {quote.date}</span>
+            {error && (
+                <div className="error-message" style={{ padding: '1rem', background: '#ffebee', color: '#c62828', borderRadius: '8px', marginBottom: '1rem' }}>
+                    {error}
+                </div>
+            )}
+
+            {quotes.length === 0 ? (
+                <div className="empty-state card" style={{ padding: '3rem', textAlign: 'center' }}>
+                    <p style={{ color: '#888' }}>Henüz teklif talebi yok.</p>
+                </div>
+            ) : (
+                <div className="quotes-list">
+                    {quotes.map(quote => (
+                        <div key={quote._id} className="quote-card card">
+                            <div className="quote-header">
+                                <div className="quote-meta">
+                                    <span className="quote-status" style={{ background: statusColors[quote.status] }}>
+                                        {statusLabels[quote.status]}
+                                    </span>
+                                    <span className="quote-date"><Clock size={14} /> {formatDate(quote.createdAt)}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button className="btn btn-ghost btn-sm" onClick={() => setSelectedQuote(quote)}>
+                                        <Eye size={16} /> Görüntüle
+                                    </button>
+                                    <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(quote._id)} style={{ color: '#ef4444' }}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
-                            <button className="btn btn-ghost btn-sm" onClick={() => setSelectedQuote(quote)}>
-                                <Eye size={16} /> View
-                            </button>
-                        </div>
-                        <div className="quote-body">
-                            <h4>{quote.name}</h4>
-                            <p className="company">{quote.company} • {quote.country}</p>
-                            <p className="message">"{quote.message}"</p>
-                            <div className="quote-products">
-                                {quote.products.map(sku => (
-                                    <span key={sku} className="product-tag">{sku}</span>
-                                ))}
+                            <div className="quote-body">
+                                <h4>{quote.name}</h4>
+                                <p className="company">{quote.company} • {quote.country}</p>
+                                <p className="message">"{quote.message || 'Mesaj yok'}"</p>
+                                <div className="quote-products">
+                                    {quote.products?.map(sku => (
+                                        <span key={sku} className="product-tag">{sku}</span>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="quote-actions">
+                                <a href={`mailto:${quote.email}`} className="btn btn-secondary btn-sm">
+                                    <Mail size={14} /> E-posta Gönder
+                                </a>
+                                {quote.status === 'new' && (
+                                    <button className="btn btn-primary btn-sm" onClick={() => updateStatus(quote._id, 'replied')}>
+                                        <Check size={14} /> Cevaplandı
+                                    </button>
+                                )}
+                                {quote.status === 'replied' && (
+                                    <button className="btn btn-secondary btn-sm" onClick={() => updateStatus(quote._id, 'closed')}>
+                                        Kapat
+                                    </button>
+                                )}
                             </div>
                         </div>
-                        <div className="quote-actions">
-                            <a href={`mailto:${quote.email}`} className="btn btn-secondary btn-sm">
-                                <Mail size={14} /> Reply
-                            </a>
-                            {quote.status === 'new' && (
-                                <button className="btn btn-primary btn-sm" onClick={() => updateStatus(quote.id, 'replied')}>
-                                    <Check size={14} /> Mark Replied
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* Quote Detail Modal */}
             {selectedQuote && (
                 <div className="modal-overlay" onClick={() => setSelectedQuote(null)}>
                     <div className="modal-content quote-detail" onClick={e => e.stopPropagation()}>
                         <button className="modal-close" onClick={() => setSelectedQuote(null)}><X size={24} /></button>
-                        <h2>Quote Request</h2>
+                        <h2>Teklif Detayı</h2>
                         <div className="detail-grid">
-                            <div><strong>Name:</strong> {selectedQuote.name}</div>
-                            <div><strong>Company:</strong> {selectedQuote.company}</div>
-                            <div><strong>Email:</strong> {selectedQuote.email}</div>
-                            <div><strong>Phone:</strong> {selectedQuote.phone}</div>
-                            <div><strong>Country:</strong> {selectedQuote.country}</div>
-                            <div><strong>Date:</strong> {selectedQuote.date}</div>
+                            <div><strong>İsim:</strong> {selectedQuote.name}</div>
+                            <div><strong>Firma:</strong> {selectedQuote.company}</div>
+                            <div><strong>E-posta:</strong> <a href={`mailto:${selectedQuote.email}`}>{selectedQuote.email}</a></div>
+                            <div><strong>Telefon:</strong> <a href={`tel:${selectedQuote.phone}`}>{selectedQuote.phone}</a></div>
+                            <div><strong>Ülke:</strong> {selectedQuote.country}</div>
+                            <div><strong>Tarih:</strong> {formatDate(selectedQuote.createdAt)}</div>
                         </div>
                         <div className="detail-section">
-                            <strong>Products:</strong>
+                            <strong>Ürünler:</strong>
                             <div className="quote-products">
-                                {selectedQuote.products.map(sku => <span key={sku} className="product-tag">{sku}</span>)}
+                                {selectedQuote.products?.map(sku => <span key={sku} className="product-tag">{sku}</span>)}
                             </div>
                         </div>
                         <div className="detail-section">
-                            <strong>Message:</strong>
-                            <p>{selectedQuote.message}</p>
+                            <strong>Mesaj:</strong>
+                            <p>{selectedQuote.message || 'Mesaj yok'}</p>
+                        </div>
+                        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px' }}>
+                            <a href={`mailto:${selectedQuote.email}`} className="btn btn-primary">
+                                <Mail size={16} /> E-posta Gönder
+                            </a>
+                            <a href={`https://wa.me/${selectedQuote.phone?.replace(/\D/g, '')}`} target="_blank" className="btn btn-secondary">
+                                WhatsApp
+                            </a>
                         </div>
                     </div>
                 </div>

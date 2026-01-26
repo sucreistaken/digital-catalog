@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, Phone, MessageCircle, Mail, MapPin, CheckCircle } from 'lucide-react';
+import { Send, Phone, MessageCircle, Mail, MapPin, CheckCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { productsApi } from '../utils/api';
+import { productsApi, quotesApi } from '../utils/api';
 import './Quote.css';
 
 const Quote = () => {
@@ -10,6 +10,7 @@ const Quote = () => {
     const [searchParams] = useSearchParams();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState(null);
     const [products, setProducts] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
@@ -41,7 +42,7 @@ const Quote = () => {
         if (productId) {
             setFormData(prev => ({
                 ...prev,
-                products: [parseInt(productId)]
+                products: [productId]
             }));
         }
     }, [searchParams]);
@@ -49,12 +50,27 @@ const Quote = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError(null);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            // Get product SKUs for selected products
+            const selectedProducts = formData.products.map(id => {
+                const product = products.find(p => (p._id || p.id) === id || p._id === id);
+                return product?.sku || id;
+            });
 
-        setIsSubmitting(false);
-        setIsSuccess(true);
+            await quotesApi.create({
+                ...formData,
+                products: selectedProducts
+            });
+
+            setIsSuccess(true);
+        } catch (err) {
+            console.error('Quote submit error:', err);
+            setError('Teklif gönderilemedi. Lütfen tekrar deneyin.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleProductToggle = (productId) => {
@@ -79,7 +95,7 @@ const Quote = () => {
                         <CheckCircle size={64} />
                     </div>
                     <h2>{t('quoteSuccess')}</h2>
-                    <p>We will contact you within 24 hours.</p>
+                    <p>24 saat içinde sizinle iletişime geçeceğiz.</p>
                 </div>
             </div>
         );
@@ -93,6 +109,12 @@ const Quote = () => {
                     <div className="quote-form-section">
                         <h1 className="text-h2">{t('requestAQuote')}</h1>
                         <p className="text-body">{t('quoteFormDesc')}</p>
+
+                        {error && (
+                            <div className="error-message" style={{ padding: '1rem', background: '#ffebee', color: '#c62828', borderRadius: '8px', marginBottom: '1rem' }}>
+                                {error}
+                            </div>
+                        )}
 
                         <form onSubmit={handleSubmit} className="quote-form">
                             <div className="form-row">
@@ -151,11 +173,11 @@ const Quote = () => {
                                 <label>{t('productsOfInterest')}</label>
                                 <div className="product-checkboxes">
                                     {products.slice(0, 20).map(product => (
-                                        <label key={product.id} className="product-checkbox">
+                                        <label key={product._id || product.id} className="product-checkbox">
                                             <input
                                                 type="checkbox"
-                                                checked={formData.products.includes(product.id)}
-                                                onChange={() => handleProductToggle(product.id)}
+                                                checked={formData.products.includes(product._id || product.id)}
+                                                onChange={() => handleProductToggle(product._id || product.id)}
                                             />
                                             <span className="checkbox-custom"></span>
                                             <span className="checkbox-label">{getProductName(product)}</span>
@@ -170,13 +192,16 @@ const Quote = () => {
                                     rows="4"
                                     value={formData.message}
                                     onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                    placeholder="Enter additional details about your requirements..."
+                                    placeholder="Gereksinimleriniz hakkında detay ekleyin..."
                                 ></textarea>
                             </div>
 
                             <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
                                 {isSubmitting ? (
-                                    <span>{t('sending')}</span>
+                                    <>
+                                        <Loader2 size={20} className="animate-spin" />
+                                        <span>{t('sending')}</span>
+                                    </>
                                 ) : (
                                     <>
                                         <Send size={20} />
