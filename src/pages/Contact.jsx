@@ -48,17 +48,23 @@ const Contact = () => {
                             <MapPin size={32} />
                         </div>
                         <h3>{t('visitUs')}</h3>
-                        <p className="contact-value">Adana, Turkey</p>
+                        <p className="contact-value">Fatih Plastik, Adana</p>
                         <span className="card-hint">Factory & Showroom</span>
                     </div>
                 </div>
 
-                {/* Map Placeholder */}
+                {/* Map */}
                 <div className="map-section">
-                    <div className="map-placeholder">
-                        <MapPin size={48} />
-                        <p>Map will be displayed here</p>
-                    </div>
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3186.940468823535!2d35.138774675654275!3d36.98735417219443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x15287d55aed4c7e7%3A0xf61d7c204662058d!2sFatih%20Plastik!5e0!3m2!1str!2str!4v1769452145729!5m2!1str!2str"
+                        width="100%"
+                        height="450"
+                        style={{ border: 0, borderRadius: '20px' }}
+                        allowFullScreen=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Fatih Plastik Location"
+                    ></iframe>
                 </div>
 
                 {/* Working Hours */}

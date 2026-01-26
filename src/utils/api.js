@@ -62,6 +62,35 @@ export const productsApi = {
 
         if (!res.ok) throw new Error('Resim yüklenemedi');
         return res.json();
+    },
+
+    // Create product with color variants as separate products
+    createWithVariants: async (product) => {
+        const res = await fetch(`${API_BASE_URL}/products/with-variants`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+        });
+        if (!res.ok) throw new Error('Ürün varyantları oluşturulamadı');
+        return res.json();
+    },
+
+    // Get all products in a group
+    getByGroup: async (groupId) => {
+        const res = await fetch(`${API_BASE_URL}/products/group/${groupId}`);
+        if (!res.ok) throw new Error('Grup ürünleri bulunamadı');
+        return res.json();
+    },
+
+    // Sync all products in a group
+    syncGroup: async (groupId, syncFields) => {
+        const res = await fetch(`${API_BASE_URL}/products/sync-group/${groupId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ syncFields })
+        });
+        if (!res.ok) throw new Error('Grup senkronizasyonu başarısız');
+        return res.json();
     }
 };
 

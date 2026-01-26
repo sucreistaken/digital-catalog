@@ -37,3 +37,7 @@ coverage/
 
 # OS files
 Thumbs.db
+
+# User Uploads
+uploads
+server/uploads

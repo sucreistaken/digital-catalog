@@ -28,6 +28,7 @@ const productSchema = new mongoose.Schema({
         }
     }],
     defaultSize: { type: String },
+    imageScale: { type: Number, default: 100 }, // Görsel ölçek değeri (50-200)
     // Eski colorFilters yerine yeni colorVariants
     colorVariants: [{
         id: String,
@@ -40,6 +41,13 @@ const productSchema = new mongoose.Schema({
     colorFilters: {
         hue: { type: Number },
         saturation: { type: Number }
+    },
+    // New fields for Product Grouping (Variant linking)
+    groupId: { type: String, index: true }, // Shared ID among variants
+    primaryColor: {
+        id: String,
+        name: String,
+        hex: String
     }
 }, {
     timestamps: true // createdAt, updatedAt otomatik ekler

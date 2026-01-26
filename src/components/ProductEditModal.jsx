@@ -59,6 +59,9 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
     // Creating this state at the top level to avoid Hook Rule violation
     const [uploading, setUploading] = useState(false);
 
+    // Option to create separate products for each color variant
+    const [createSeparateVariants, setCreateSeparateVariants] = useState(true);
+
     // Initialize form with product data if editing
     useEffect(() => {
         if (product) {
@@ -229,14 +232,23 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
 
     const handleSave = () => {
         const selectedVariant = sizeVariants.find(v => v.id === selectedSize) || sizeVariants[0];
+
+        // Add hex color to each variant for catalog display
+        const enrichedColorVariants = colorVariants.map(v => ({
+            ...v,
+            hex: colors.find(c => c.id === v.colorId)?.hex || '#808080'
+        }));
+
         const productData = {
             ...formData,
             id: product?.id || Date.now(),
             dimensions: selectedVariant?.dimensions || { width: 100, height: 100, depth: 50 },
             sizeVariants,
             defaultSize: selectedSize,
-            colorVariants,
-            colors: colorVariants.map(v => v.colorId), // Keep colors array for backwards compatibility
+            imageScale: imageScale,
+            colorVariants: enrichedColorVariants,
+            colors: enrichedColorVariants.length > 0 ? enrichedColorVariants.map(v => v.colorId) : ['white'],
+            createSeparateVariants, // Flag to indicate if variants should be created as separate products
         };
         onSave(productData);
         onClose();
@@ -400,10 +412,12 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                         </div>
 
                                         {selectedColorVariant && (
-                                            <button className="add-color-btn" onClick={handleAddColorVariant}>
-                                                <Plus size={16} />
-                                                "{selectedColorVariant.colorName}" Rengini Ekle
-                                            </button>
+                                            <div className="variant-actions">
+                                                <button className="add-color-btn" onClick={handleAddColorVariant}>
+                                                    <Plus size={16} />
+                                                    "{selectedColorVariant.colorName}" Rengini Ekle
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
 
@@ -653,12 +667,25 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
 
                         {/* Footer */}
                         <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={onClose}>
-                                İptal
-                            </button>
-                            <button className="btn btn-primary" onClick={handleSave}>
-                                {isEditing ? 'Güncelle' : 'Kaydet'}
-                            </button>
+                            {/* Variant Toggle - Only show when adding new product with color variants */}
+                            {!isEditing && colorVariants.length > 0 && (
+                                <label className="variant-toggle">
+                                    <input
+                                        type="checkbox"
+                                        checked={createSeparateVariants}
+                                        onChange={e => setCreateSeparateVariants(e.target.checked)}
+                                    />
+                                    <span>Her renk için ayrı ürün oluştur ({colorVariants.length} ürün)</span>
+                                </label>
+                            )}
+                            <div className="footer-buttons">
+                                <button className="btn btn-secondary" onClick={onClose}>
+                                    İptal
+                                </button>
+                                <button className="btn btn-primary" onClick={handleSave}>
+                                    {isEditing ? 'Güncelle' : (createSeparateVariants && colorVariants.length > 0 ? `${colorVariants.length} Ürün Kaydet` : 'Kaydet')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

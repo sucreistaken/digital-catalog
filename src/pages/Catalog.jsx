@@ -23,7 +23,7 @@ const getMaterial = (materialId) => materials.find(m => m.id === materialId);
 // Get color info
 const getColor = (colorId) => colors.find(c => c.id === colorId);
 
-// Product Modal V2 - matching Showroom design
+// Product Modal (Standard Version)
 const ProductModal = ({ product, onClose, onRequestQuote, language, t }) => {
     if (!product) return null;
 
@@ -31,112 +31,123 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t }) => {
     const material = getMaterial(product.material);
     const categoryObj = categories.find(c => c.id === product.category);
 
-    // Get filter style for selected color
+    // Get filter style for selected color AND imageScale
     const getImageStyle = () => {
-        if (!selectedColor) return {};
-        const variant = product.colorVariants?.find(v => v.colorId === selectedColor);
-        if (variant) {
-            return {
-                filter: `hue-rotate(${variant.hue}deg) saturate(${variant.saturation / 100})`,
-                transition: 'filter 0.3s ease'
-            };
+        let style = { transition: 'filter 0.3s ease, transform 0.3s ease' };
+
+        // Apply imageScale
+        const scale = product.imageScale || 100;
+        const normalizedScale = 0.7 + ((scale - 50) / 150) * 0.6;
+        style.transform = `scale(${normalizedScale})`;
+
+        // Apply color filter
+        if (selectedColor) {
+            const variant = product.colorVariants?.find(v => v.colorId === selectedColor);
+            if (variant) {
+                style.filter = `hue-rotate(${variant.hue}deg) saturate(${variant.saturation / 100})`;
+            }
         }
-        // Fallback or default
-        return {};
+        return style;
     };
+
+    // Determine current display color name
+    const selectedColorName = getColor(selectedColor)?.name || '';
 
     return (
         <div className="product-modal-overlay" onClick={onClose}>
-            <div className="product-modal-v2" onClick={e => e.stopPropagation()}>
-                <button className="modal-close-v2" onClick={onClose}>
+            <div className="product-modal" onClick={e => e.stopPropagation()}>
+                <button className="modal-close" onClick={onClose}>
                     <X size={20} />
                 </button>
-                <div className="modal-content-v2">
-                    <div className="modal-image-v2">
+                <div className="modal-content">
+                    <div className="modal-image">
                         <img
                             src={product.image}
                             alt={getProductName(product, language)}
                             style={getImageStyle()}
                         />
                         {!product.inStock && (
-                            <div className="out-stock-badge-v2">{t('outOfStock')}</div>
+                            <div className="out-stock-badge">{t('outOfStock')}</div>
                         )}
                     </div>
-                    <div className="modal-details-v2">
-                        <div className="modal-details-scroll">
-                            <div className="modal-header-v2">
-                                <span className="modal-sku-v2">{product.sku}</span>
-                                <h2>{getProductName(product, language)}</h2>
-                                {categoryObj && (
-                                    <span className="modal-category-v2">
-                                        {getCategoryName(categoryObj, language)}
-                                    </span>
-                                )}
-                            </div>
-
-                            <p className="modal-description-v2">
-                                {product[`description${language.charAt(0).toUpperCase() + language.slice(1)}`] || product.description}
-                            </p>
-
-                            <div className="modal-specs-v2">
-                                <div className="spec-card-v2">
-                                    <Ruler size={24} />
-                                    <div>
-                                        <label>{t('dimensions')}</label>
-                                        <span>
-                                            {product.dimensions.width} × {product.dimensions.height} × {product.dimensions.depth} cm
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="spec-card-v2">
-                                    <Weight size={24} />
-                                    <div>
-                                        <label>{t('weight')}</label>
-                                        <span>{product.weight} kg</span>
-                                    </div>
-                                </div>
-                                {material && (
-                                    <div className="spec-card-v2">
-                                        <Box size={24} />
-                                        <div>
-                                            <label>{t('material')}</label>
-                                            <span>{material.name}</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="modal-colors-v2">
-                                <label>{t('colorOptions')}</label>
-                                <div className="color-chips-v2">
-                                    {product.colors.map(colorId => {
-                                        const color = getColor(colorId);
-                                        if (!color) return null;
-                                        return (
-                                            <button
-                                                key={color.id}
-                                                className={`color-chip-v2 ${selectedColor === color.id ? 'active' : ''}`}
-                                                style={{ backgroundColor: color.hex }}
-                                                onClick={() => setSelectedColor(color.id)}
-                                                title={color.name}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                                {selectedColor && (
-                                    <p className="selected-color-name">
-                                        {getColor(selectedColor)?.name}
-                                    </p>
-                                )}
-                            </div>
+                    <div className="modal-details">
+                        <div className="modal-header">
+                            <span className="modal-sku">{product.sku || 'SKU-000'}</span>
+                            <h2>{getProductName(product, language) || 'Yeni Ürün'}</h2>
+                            {categoryObj && (
+                                <span className="modal-category">
+                                    {getCategoryName(categoryObj, language)}
+                                </span>
+                            )}
                         </div>
 
-                        <div className="modal-actions-v2">
-                            <button className="btn-primary-v2" onClick={() => onRequestQuote(product)}>
+                        <p className="modal-description">
+                            {product[`description${language.charAt(0).toUpperCase() + language.slice(1)}`] || product.description}
+                        </p>
+
+                        <div className="modal-specs">
+                            <div className="spec-item">
+                                <label>{t('dimensions')}</label>
+                                <span>
+                                    {product.dimensions?.width || 0} × {product.dimensions?.height || 0} × {product.dimensions?.depth || 0} cm
+                                </span>
+                            </div>
+                            <div className="spec-item">
+                                <label>{t('weight')}</label>
+                                <span>{product.weight || 0} kg</span>
+                            </div>
+                            {material && (
+                                <div className="spec-item">
+                                    <label>{t('material')}</label>
+                                    <span>{material.name}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="modal-colors">
+                            <label>{t('colorOptions')}</label>
+                            <div className="color-chips">
+                                {product.colors && product.colors.map(colorId => {
+                                    const color = getColor(colorId);
+                                    return (
+                                        <button
+                                            key={colorId}
+                                            className={`color-chip ${selectedColor === colorId ? 'active' : ''}`}
+                                            style={{ backgroundColor: color?.hex }}
+                                            onClick={() => setSelectedColor(selectedColor === colorId ? null : colorId)}
+                                            title={color?.name}
+                                        />
+                                    );
+                                })}
+                                {/* Legacy Variants */}
+                                {product.colorVariants && product.colorVariants.map(v => {
+                                    // Don't show if already in main colors
+                                    if (product.colors && product.colors.includes(v.colorId)) return null;
+                                    const color = getColor(v.colorId);
+                                    return (
+                                        <button
+                                            key={v.colorId}
+                                            className={`color-chip ${selectedColor === v.colorId ? 'active' : ''}`}
+                                            style={{ backgroundColor: color?.hex }}
+                                            onClick={() => setSelectedColor(selectedColor === v.colorId ? null : v.colorId)}
+                                            title={v.colorName}
+                                        />
+                                    );
+                                })}
+                            </div>
+                            {selectedColorName && (
+                                <p className="selected-color-name">
+                                    {selectedColorName}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="modal-actions">
+                            <button className="btn-primary" onClick={() => onRequestQuote(product)}>
                                 <FileText size={20} />
                                 <span>{language === 'tr' ? 'Teklif Al' : 'Get Quote'}</span>
                             </button>
-                            <a href="/showroom" className="btn-secondary-v2">
+                            <a href="/showroom" className="btn-secondary">
                                 <Eye size={20} />
                                 <span>{language === 'tr' ? 'Showroom' : 'Showroom'}</span>
                             </a>
@@ -149,31 +160,49 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t }) => {
 };
 
 // Product Card
-const ProductCard = ({ product, onClick, language, t }) => (
-    <div className="product-card" onClick={() => onClick(product)}>
-        <div className="product-image">
-            <img src={product.image} alt={getProductName(product, language)} loading="lazy" />
-            {product.featured && <span className="featured-badge">Featured</span>}
-            {!product.inStock && <div className="out-stock-overlay">{t('outOfStock')}</div>}
-        </div>
-        <div className="product-info">
-            <span className="product-sku">{product.sku}</span>
-            <h3>{getProductName(product, language)}</h3>
-            <div className="product-specs-mini">
-                <span>{product.dimensions.width}×{product.dimensions.height}×{product.dimensions.depth} cm</span>
-                <span>•</span>
-                <span>{product.weight} kg</span>
+const ProductCard = ({ product, onClick, language, t }) => {
+    // Calculate scale style from saved imageScale
+    const getImageStyle = () => {
+        const scale = product.imageScale || 100;
+        // Normalize scale: 100% = 1, range 50-200 maps to 0.7-1.3 for subtle visual effect
+        const normalizedScale = 0.7 + ((scale - 50) / 150) * 0.6;
+        return {
+            transform: `scale(${normalizedScale})`,
+            transition: 'transform 0.3s ease'
+        };
+    };
+
+    return (
+        <div className="product-card" onClick={() => onClick(product)}>
+            <div className="product-image">
+                <img
+                    src={product.image}
+                    alt={getProductName(product, language)}
+                    loading="lazy"
+                    style={getImageStyle()}
+                />
+                {product.featured && <span className="featured-badge">Featured</span>}
+                {!product.inStock && <div className="out-stock-overlay">{t('outOfStock')}</div>}
             </div>
-            <div className="product-colors-mini">
-                {product.colors.slice(0, 4).map(colorId => {
-                    const color = getColor(colorId);
-                    return <div key={colorId} className="mini-swatch" style={{ backgroundColor: color?.hex }} />;
-                })}
-                {product.colors.length > 4 && <span className="more-colors">+{product.colors.length - 4}</span>}
+            <div className="product-info">
+                <span className="product-sku">{product.sku || 'SKU-000'}</span>
+                <h3>{getProductName(product, language) || 'Yeni Ürün'}</h3>
+                <div className="product-specs-mini">
+                    <span>{product.dimensions?.width || 0}×{product.dimensions?.height || 0}×{product.dimensions?.depth || 0} cm</span>
+                    <span>•</span>
+                    <span>{product.weight || 0} kg</span>
+                </div>
+                <div className="product-colors-mini">
+                    {product.colors && product.colors.slice(0, 4).map(colorId => {
+                        const color = getColor(colorId);
+                        return <div key={colorId} className="mini-swatch" style={{ backgroundColor: color?.hex || '#ccc' }} />;
+                    })}
+                    {product.colors && product.colors.length > 4 && <span className="more-colors">+{product.colors.length - 4}</span>}
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 const Catalog = () => {
     const { t, language } = useLanguage();

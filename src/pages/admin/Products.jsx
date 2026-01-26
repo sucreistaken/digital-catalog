@@ -8,6 +8,8 @@ import '../Dashboard.css';
 
 const Products = () => {
     const { t, language } = useLanguage();
+
+    // Original State
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [products, setProducts] = useState([]);
@@ -87,9 +89,17 @@ const Products = () => {
                     (p._id || p.id) === (updated._id || updated.id) ? updated : p
                 ));
             } else {
-                // Add new product
-                const created = await productsApi.create(productData);
-                setProducts([created, ...products]);
+                // Add new product(s)
+                if (productData.createSeparateVariants && productData.colorVariants?.length > 0) {
+                    // Create separate product for each color variant
+                    const createdProducts = await productsApi.createWithVariants(productData);
+                    setProducts([...createdProducts, ...products]);
+                    alert(`${createdProducts.length} ürün başarıyla oluşturuldu!`);
+                } else {
+                    // Create single product
+                    const created = await productsApi.create(productData);
+                    setProducts([created, ...products]);
+                }
             }
         } catch (err) {
             console.error('Save error:', err);
@@ -211,4 +221,3 @@ const Products = () => {
 };
 
 export default Products;
-
