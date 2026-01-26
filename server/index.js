@@ -13,6 +13,9 @@ app.use(express.json());
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve React frontend static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // MongoDB bağlantısı
 const connectDB = async () => {
     try {
@@ -36,16 +39,9 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Fabrikaa API çalışıyor!' });
 });
 
-// Ana sayfa
-app.get('/', (req, res) => {
-    res.json({
-        name: 'Fabrikaa API',
-        version: '1.0.0',
-        endpoints: {
-            products: '/api/products',
-            health: '/api/health'
-        }
-    });
+// Handle SPA routing: serve index.html for any unknown route
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start server

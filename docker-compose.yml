@@ -1,20 +1,11 @@
 services:
-  # Frontend - React + Nginx
-  frontend:
-    build: .
+  # App (Frontend + Backend in one)
+  app:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     ports:
-      - "5173:80"
-    depends_on:
-      - backend
-    environment:
-      - NODE_ENV=production
-    restart: unless-stopped
-
-  # Backend - Node.js API
-  backend:
-    build: ./server
-    ports:
-      - "3001:3001"
+      - "5173:3001"
     depends_on:
       mongo:
         condition: service_healthy
