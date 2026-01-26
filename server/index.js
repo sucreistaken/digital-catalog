@@ -34,6 +34,7 @@ const uploadRoutes = require('./routes/upload'); // Added upload routes
 app.use('/api/products', productRoutes); // Using productRoutes
 app.use('/api/upload', uploadRoutes); // Added upload routes
 
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Fabrikaa API çalışıyor!' });
