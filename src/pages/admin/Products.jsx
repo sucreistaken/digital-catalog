@@ -1,14 +1,42 @@
-import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Filter, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { products as allProducts, categories, materials, colors } from '../../data/products';
+import { products as defaultProducts, categories, materials, colors } from '../../data/products';
+import { productsApi } from '../../utils/api';
+import ProductEditModal from '../../components/ProductEditModal';
 import '../Dashboard.css';
 
 const Products = () => {
     const { t, language } = useLanguage();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
-    const [products, setProducts] = useState(allProducts);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
+
+    // Load products from API
+    useEffect(() => {
+        loadProducts();
+    }, []);
+
+    const loadProducts = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await productsApi.getAll();
+            setProducts(data.length > 0 ? data : defaultProducts);
+        } catch (err) {
+            console.error('API Error:', err);
+            setError('API bağlantısı başarısız. Varsayılan ürünler yükleniyor...');
+            setProducts(defaultProducts);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getProductName = (product) => {
         const langKey = `name${language.charAt(0).toUpperCase() + language.slice(1)}`;
@@ -23,14 +51,49 @@ const Products = () => {
 
     const filteredProducts = products.filter(p => {
         const matchesSearch = getProductName(p).toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+            p.sku?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
-    const handleDelete = (id) => {
-        if (confirm('Are you sure you want to delete this product?')) {
-            setProducts(products.filter(p => p.id !== id));
+    const handleDelete = async (id) => {
+        if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
+            try {
+                await productsApi.delete(id);
+                setProducts(products.filter(p => (p._id || p.id) !== id));
+            } catch (err) {
+                console.error('Delete error:', err);
+                alert('Silme işlemi başarısız!');
+            }
+        }
+    };
+
+    const handleAddProduct = () => {
+        setEditingProduct(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditProduct = (product) => {
+        setEditingProduct(product);
+        setIsModalOpen(true);
+    };
+
+    const handleSaveProduct = async (productData) => {
+        try {
+            if (editingProduct) {
+                // Update existing product
+                const updated = await productsApi.update(editingProduct._id || editingProduct.id, productData);
+                setProducts(products.map(p =>
+                    (p._id || p.id) === (updated._id || updated.id) ? updated : p
+                ));
+            } else {
+                // Add new product
+                const created = await productsApi.create(productData);
+                setProducts([created, ...products]);
+            }
+        } catch (err) {
+            console.error('Save error:', err);
+            alert('Kaydetme işlemi başarısız!');
         }
     };
 
@@ -39,16 +102,16 @@ const Products = () => {
             <header className="admin-header">
                 <div>
                     <h1 className="text-h2">{t('products')}</h1>
-                    <p className="text-body">Manage your product catalog</p>
+                    <p className="text-body">Ürün kataloğunuzu yönetin</p>
                 </div>
                 <div className="header-actions">
                     <button className="btn btn-secondary">
                         <Download size={18} />
-                        Export
+                        Dışa Aktar
                     </button>
-                    <button className="btn btn-primary">
+                    <button className="btn btn-primary" onClick={handleAddProduct}>
                         <Plus size={18} />
-                        Add Product
+                        Ürün Ekle
                     </button>
                 </div>
             </header>
@@ -59,7 +122,7 @@ const Products = () => {
                     <Search size={18} />
                     <input
                         type="text"
-                        placeholder="Search by name or SKU..."
+                        placeholder="Ad veya SKU ile ara..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
@@ -69,12 +132,12 @@ const Products = () => {
                     onChange={e => setSelectedCategory(e.target.value)}
                     className="filter-select"
                 >
-                    <option value="all">All Categories</option>
+                    <option value="all">Tüm Kategoriler</option>
                     {categories.map(cat => (
                         <option key={cat.id} value={cat.id}>{getCategoryName(cat.id)}</option>
                     ))}
                 </select>
-                <span className="results-count">{filteredProducts.length} products</span>
+                <span className="results-count">{filteredProducts.length} ürün</span>
             </div>
 
             {/* Products Table */}
@@ -82,19 +145,19 @@ const Products = () => {
                 <table>
                     <thead>
                         <tr>
-                            <th>Product</th>
+                            <th>Ürün</th>
                             <th>SKU</th>
-                            <th>Category</th>
-                            <th>Dimensions</th>
-                            <th>Weight</th>
-                            <th>Colors</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>Kategori</th>
+                            <th>Boyutlar</th>
+                            <th>Ağırlık</th>
+                            <th>Renkler</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredProducts.map(product => (
-                            <tr key={product.id}>
+                            <tr key={product._id || product.id}>
                                 <td>
                                     <div className="product-cell">
                                         <img src={product.image} alt="" className="product-thumb" />
@@ -103,7 +166,7 @@ const Products = () => {
                                 </td>
                                 <td className="sku-cell">{product.sku}</td>
                                 <td>{getCategoryName(product.category)}</td>
-                                <td>{product.dimensions.width}×{product.dimensions.height}×{product.dimensions.depth} cm</td>
+                                <td>{product.dimensions?.width}×{product.dimensions?.height}×{product.dimensions?.depth} cm</td>
                                 <td>{product.weight} kg</td>
                                 <td>
                                     <div className="color-dots">
@@ -116,14 +179,16 @@ const Products = () => {
                                 </td>
                                 <td>
                                     <span className={`status-badge ${product.inStock ? 'in-stock' : 'out-stock'}`}>
-                                        {product.inStock ? 'In Stock' : 'Out of Stock'}
+                                        {product.inStock ? 'Stokta' : 'Tükendi'}
                                     </span>
                                 </td>
                                 <td>
                                     <div className="action-buttons">
-                                        <button className="action-btn" title="View"><Eye size={16} /></button>
-                                        <button className="action-btn" title="Edit"><Edit size={16} /></button>
-                                        <button className="action-btn danger" title="Delete" onClick={() => handleDelete(product.id)}>
+                                        <button className="action-btn" title="Görüntüle"><Eye size={16} /></button>
+                                        <button className="action-btn" title="Düzenle" onClick={() => handleEditProduct(product)}>
+                                            <Edit size={16} />
+                                        </button>
+                                        <button className="action-btn danger" title="Sil" onClick={() => handleDelete(product._id || product.id)}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -133,8 +198,17 @@ const Products = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Product Edit Modal */}
+            <ProductEditModal
+                product={editingProduct}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSaveProduct}
+            />
         </div>
     );
 };
 
 export default Products;
+

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { products, categories, colors, materials } from '../data/products';
+import { products as defaultProducts, categories, colors, materials } from '../data/products';
+import { productsApi } from '../utils/api';
 import './Catalog.css';
 
 // Get localized product name
@@ -26,77 +27,107 @@ const getColor = (colorId) => colors.find(c => c.id === colorId);
 const ProductModal = ({ product, onClose, onRequestQuote, language, t }) => {
     if (!product) return null;
 
+    const [selectedColor, setSelectedColor] = useState(null);
     const material = getMaterial(product.material);
     const categoryObj = categories.find(c => c.id === product.category);
+
+    // Get filter style for selected color
+    const getImageStyle = () => {
+        if (!selectedColor) return {};
+        const variant = product.colorVariants?.find(v => v.colorId === selectedColor);
+        if (variant) {
+            return {
+                filter: `hue-rotate(${variant.hue}deg) saturate(${variant.saturation / 100})`,
+                transition: 'filter 0.3s ease'
+            };
+        }
+        // Fallback or default
+        return {};
+    };
 
     return (
         <div className="product-modal-overlay" onClick={onClose}>
             <div className="product-modal-v2" onClick={e => e.stopPropagation()}>
                 <button className="modal-close-v2" onClick={onClose}>
-                    <X size={24} />
+                    <X size={20} />
                 </button>
-
                 <div className="modal-content-v2">
                     <div className="modal-image-v2">
                         <img
                             src={product.image}
                             alt={getProductName(product, language)}
-                            onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/400x300?text=Ürün+Resmi';
-                            }}
+                            style={getImageStyle()}
                         />
-                        {!product.inStock && <div className="out-stock-badge-v2">{t('outOfStock')}</div>}
+                        {!product.inStock && (
+                            <div className="out-stock-badge-v2">{t('outOfStock')}</div>
+                        )}
                     </div>
-
                     <div className="modal-details-v2">
-                        <div className="modal-header-v2">
-                            <span className="modal-sku-v2">{product.sku}</span>
-                            <h2>{getProductName(product, language)}</h2>
-                            <span className="modal-category-v2">{getCategoryName(categoryObj, language)}</span>
-                        </div>
-
-                        <p className="modal-description-v2">
-                            {language === 'tr' && product.descriptionTr ? product.descriptionTr : product.description}
-                        </p>
-
-                        <div className="modal-specs-v2">
-                            <div className="spec-card-v2">
-                                <Ruler size={24} />
-                                <div>
-                                    <label>{language === 'tr' ? 'Boyutlar' : 'Dimensions'}</label>
-                                    <span>{product.dimensions.width} × {product.dimensions.height} × {product.dimensions.depth} cm</span>
-                                </div>
+                        <div className="modal-details-scroll">
+                            <div className="modal-header-v2">
+                                <span className="modal-sku-v2">{product.sku}</span>
+                                <h2>{getProductName(product, language)}</h2>
+                                {categoryObj && (
+                                    <span className="modal-category-v2">
+                                        {getCategoryName(categoryObj, language)}
+                                    </span>
+                                )}
                             </div>
-                            <div className="spec-card-v2">
-                                <Weight size={24} />
-                                <div>
-                                    <label>{language === 'tr' ? 'Ağırlık' : 'Weight'}</label>
-                                    <span>{product.weight} kg</span>
-                                </div>
-                            </div>
-                            <div className="spec-card-v2">
-                                <Box size={24} />
-                                <div>
-                                    <label>{language === 'tr' ? 'Malzeme' : 'Material'}</label>
-                                    <span>{material?.name || '-'}</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="modal-colors-v2">
-                            <label>{language === 'tr' ? 'Renk Seçenekleri' : 'Color Options'}</label>
-                            <div className="color-chips-v2">
-                                {product.colors.map(colorId => {
-                                    const color = getColor(colorId);
-                                    return (
-                                        <span
-                                            key={colorId}
-                                            className="color-chip-v2"
-                                            style={{ background: color?.hex || '#ccc' }}
-                                            title={color?.name || colorId}
-                                        />
-                                    );
-                                })}
+                            <p className="modal-description-v2">
+                                {product[`description${language.charAt(0).toUpperCase() + language.slice(1)}`] || product.description}
+                            </p>
+
+                            <div className="modal-specs-v2">
+                                <div className="spec-card-v2">
+                                    <Ruler size={24} />
+                                    <div>
+                                        <label>{t('dimensions')}</label>
+                                        <span>
+                                            {product.dimensions.width} × {product.dimensions.height} × {product.dimensions.depth} cm
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="spec-card-v2">
+                                    <Weight size={24} />
+                                    <div>
+                                        <label>{t('weight')}</label>
+                                        <span>{product.weight} kg</span>
+                                    </div>
+                                </div>
+                                {material && (
+                                    <div className="spec-card-v2">
+                                        <Box size={24} />
+                                        <div>
+                                            <label>{t('material')}</label>
+                                            <span>{material.name}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="modal-colors-v2">
+                                <label>{t('colorOptions')}</label>
+                                <div className="color-chips-v2">
+                                    {product.colors.map(colorId => {
+                                        const color = getColor(colorId);
+                                        if (!color) return null;
+                                        return (
+                                            <button
+                                                key={color.id}
+                                                className={`color-chip-v2 ${selectedColor === color.id ? 'active' : ''}`}
+                                                style={{ backgroundColor: color.hex }}
+                                                onClick={() => setSelectedColor(color.id)}
+                                                title={color.name}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                                {selectedColor && (
+                                    <p className="selected-color-name">
+                                        {getColor(selectedColor)?.name}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -149,6 +180,26 @@ const Catalog = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Load products from API
+    useEffect(() => {
+        loadProducts();
+    }, []);
+
+    const loadProducts = async () => {
+        try {
+            setLoading(true);
+            const data = await productsApi.getAll();
+            setProducts(data.length > 0 ? data : defaultProducts);
+        } catch (err) {
+            console.error('API Error:', err);
+            setProducts(defaultProducts);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const filteredProducts = products.filter(product => {
         const matchesCategory = activeCategory === 'all' || product.category === activeCategory;
@@ -161,7 +212,7 @@ const Catalog = () => {
     const handleRequestQuote = (product) => {
         setSelectedProduct(null);
         // Navigate to quote page with product pre-selected
-        window.location.href = `/quote?product=${product.id}`;
+        window.location.href = `/quote?product=${product._id || product.id}`;
     };
 
     return (
@@ -224,7 +275,7 @@ const Catalog = () => {
                 <div className="products-grid">
                     {filteredProducts.map(product => (
                         <ProductCard
-                            key={product.id}
+                            key={product._id || product.id}
                             product={product}
                             onClick={setSelectedProduct}
                             language={language}
