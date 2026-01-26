@@ -24,7 +24,7 @@ const getMaterial = (materialId) => materials.find(m => m.id === materialId);
 const getColor = (colorId) => colors.find(c => c.id === colorId);
 
 // Product Modal (Standard Version)
-const ProductModal = ({ product, onClose, onRequestQuote, language, t }) => {
+const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProducts, onSwitchProduct }) => {
     if (!product) return null;
 
     const [selectedColor, setSelectedColor] = useState(null);
@@ -107,21 +107,41 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t }) => {
                         <div className="modal-colors">
                             <label>{t('colorOptions')}</label>
                             <div className="color-chips">
+                                {/* Current Product Colors */}
                                 {product.colors && product.colors.map(colorId => {
                                     const color = getColor(colorId);
                                     return (
                                         <button
                                             key={colorId}
-                                            className={`color-chip ${selectedColor === colorId ? 'active' : ''}`}
+                                            className={`color-chip ${selectedColor === colorId ? 'active' : ''} active-product-chip`}
                                             style={{ backgroundColor: color?.hex }}
                                             onClick={() => setSelectedColor(selectedColor === colorId ? null : colorId)}
                                             title={color?.name}
                                         />
                                     );
                                 })}
+
+                                {/* Sibling Products (Same Group) */}
+                                {product.groupId && allProducts && allProducts
+                                    .filter(p => p.groupId === product.groupId && (p._id || p.id) !== (product._id || product.id))
+                                    .map(sibling => {
+                                        const colorId = sibling.primaryColor?.id || sibling.colors?.[0];
+                                        if (!colorId) return null;
+                                        const color = getColor(colorId);
+                                        return (
+                                            <button
+                                                key={sibling._id || sibling.id}
+                                                className="color-chip sibling-chip"
+                                                style={{ backgroundColor: color?.hex }}
+                                                onClick={() => onSwitchProduct(sibling)}
+                                                title={`${getProductName(sibling, language)}`}
+                                            />
+                                        );
+                                    })
+                                }
+
                                 {/* Legacy Variants */}
                                 {product.colorVariants && product.colorVariants.map(v => {
-                                    // Don't show if already in main colors
                                     if (product.colors && product.colors.includes(v.colorId)) return null;
                                     const color = getColor(v.colorId);
                                     return (
@@ -155,7 +175,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
@@ -253,6 +273,8 @@ const Catalog = () => {
                     onRequestQuote={handleRequestQuote}
                     language={language}
                     t={t}
+                    allProducts={products}
+                    onSwitchProduct={setSelectedProduct}
                 />
             )}
 
