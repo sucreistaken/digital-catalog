@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { products as defaultProducts, categories, colors, materials } from '../data/products';
+import { categories, colors, materials } from '../data/products';
 import { productsApi } from '../utils/api';
 import './Catalog.css';
 
@@ -241,10 +241,10 @@ const Catalog = () => {
         try {
             setLoading(true);
             const data = await productsApi.getAll();
-            setProducts(data.length > 0 ? data : defaultProducts);
+            setProducts(data);
         } catch (err) {
             console.error('API Error:', err);
-            setProducts(defaultProducts);
+            setProducts([]);
         } finally {
             setLoading(false);
         }

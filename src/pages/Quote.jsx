@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Send, Phone, MessageCircle, Mail, MapPin, CheckCircle } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { products } from '../data/products';
+import { productsApi } from '../utils/api';
 import './Quote.css';
 
 const Quote = () => {
@@ -10,6 +10,7 @@ const Quote = () => {
     const [searchParams] = useSearchParams();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [products, setProducts] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         company: '',
@@ -19,6 +20,20 @@ const Quote = () => {
         products: [],
         message: '',
     });
+
+    // Load available products for the form
+    useEffect(() => {
+        const loadProducts = async () => {
+            try {
+                const data = await productsApi.getAll();
+                setProducts(data);
+            } catch (err) {
+                console.error('Error loading products for quote form:', err);
+                setProducts([]);
+            }
+        };
+        loadProducts();
+    }, []);
 
     // Pre-select product if coming from catalog
     useEffect(() => {

@@ -1,12 +1,29 @@
-import React from 'react';
-import { Package, Folder, MessageSquare, Users, TrendingUp, ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Package, Folder, MessageSquare, Users, TrendingUp, ArrowUpRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { products, categories } from '../data/products';
+import { categories } from '../data/products';
+import { productsApi } from '../utils/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
     const { t } = useLanguage();
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const data = await productsApi.getAll();
+                setProducts(data);
+            } catch (err) {
+                console.error('Dashboard Data Error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, []);
 
     const stats = [
         { label: 'Total Products', value: products.length, icon: Package, link: '/admin/products', color: 'var(--color-primary)' },
@@ -16,6 +33,14 @@ const Dashboard = () => {
     ];
 
     const recentProducts = products.filter(p => p.featured).slice(0, 5);
+
+    if (loading) {
+        return (
+            <div className="admin-page flex-center" style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Loader2 className="animate-spin" size={40} color="var(--color-primary)" />
+            </div>
+        );
+    }
 
     return (
         <div className="admin-page">
@@ -50,16 +75,20 @@ const Dashboard = () => {
                         <Link to="/admin/products" className="btn btn-link">View All</Link>
                     </div>
                     <div className="recent-products">
-                        {recentProducts.map(product => (
-                            <div key={product.id} className="recent-product">
-                                <img src={product.image} alt="" />
-                                <div className="product-info">
-                                    <span className="product-name">{product.name}</span>
-                                    <span className="product-sku">{product.sku}</span>
+                        {recentProducts.length === 0 ? (
+                            <p className="text-body" style={{ padding: '1rem', color: 'var(--text-secondary)' }}>No featured products yet.</p>
+                        ) : (
+                            recentProducts.map(product => (
+                                <div key={product.id || product._id} className="recent-product">
+                                    <img src={product.image} alt="" />
+                                    <div className="product-info">
+                                        <span className="product-name">{product.name}</span>
+                                        <span className="product-sku">{product.sku}</span>
+                                    </div>
+                                    <span className={`status-dot ${product.inStock ? 'in-stock' : 'out'}`}></span>
                                 </div>
-                                <span className={`status-dot ${product.inStock ? 'in-stock' : 'out'}`}></span>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
 
