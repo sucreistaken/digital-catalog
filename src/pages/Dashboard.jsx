@@ -2,20 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Package, Folder, MessageSquare, Users, TrendingUp, ArrowUpRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { categories } from '../data/products';
-import { productsApi } from '../utils/api';
+import { productsApi, categoriesApi } from '../utils/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
     const { t } = useLanguage();
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const data = await productsApi.getAll();
-                setProducts(data);
+                const [productsData, categoriesData] = await Promise.all([
+                    productsApi.getAll(),
+                    categoriesApi.getAll()
+                ]);
+                setProducts(productsData);
+                setCategories(categoriesData);
             } catch (err) {
                 console.error('Dashboard Data Error:', err);
             } finally {

@@ -158,6 +158,17 @@ export const categoriesApi = {
         });
         if (!res.ok) throw new Error('Kategoriler sıfırlanamadı');
         return res.json();
+    },
+
+    // Reorder categories (drag & drop)
+    reorder: async (orderedIds) => {
+        const res = await fetch(`${API_BASE_URL}/categories/reorder/bulk`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds })
+        });
+        if (!res.ok) throw new Error('Sıralama güncellenemedi');
+        return res.json();
     }
 };
 

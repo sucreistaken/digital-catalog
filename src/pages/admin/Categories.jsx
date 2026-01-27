@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Package, Loader2, RefreshCw, X, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Loader2, RefreshCw, X, Save, GripVertical } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { categoriesApi } from '../../utils/api';
-import { products } from '../../data/products';
+import { categoriesApi, productsApi } from '../../utils/api';
 import '../Dashboard.css';
 
 const Categories = () => {
     const { t, language } = useLanguage();
     const [categories, setCategories] = useState([]);
+    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -25,6 +25,11 @@ const Categories = () => {
     });
     const [saving, setSaving] = useState(false);
 
+    // Drag & Drop state
+    const [draggedItem, setDraggedItem] = useState(null);
+    const [dragOverItem, setDragOverItem] = useState(null);
+    const [isSavingOrder, setIsSavingOrder] = useState(false);
+
     // Toast notification state
     const [toast, setToast] = useState(null);
 
@@ -33,20 +38,24 @@ const Categories = () => {
         setTimeout(() => setToast(null), 3000);
     };
 
-    // Load categories from API
+    // Load categories and products from API
     useEffect(() => {
-        loadCategories();
+        loadData();
     }, []);
 
-    const loadCategories = async () => {
+    const loadData = async () => {
         try {
             setLoading(true);
             setError(null);
-            const data = await categoriesApi.getAll();
-            setCategories(data);
+            const [categoriesData, productsData] = await Promise.all([
+                categoriesApi.getAll(),
+                productsApi.getAll()
+            ]);
+            setCategories(categoriesData);
+            setProducts(productsData);
         } catch (err) {
-            console.error('Categories load error:', err);
-            setError('Kategoriler yüklenemedi');
+            console.error('Load error:', err);
+            setError('Veriler yüklenemedi');
         } finally {
             setLoading(false);
         }
@@ -69,6 +78,64 @@ const Categories = () => {
                 console.error('Delete error:', err);
                 showToast('Kategori silinemedi!', 'error');
             }
+        }
+    };
+
+    // Drag & Drop handlers
+    const handleDragStart = (e, category) => {
+        setDraggedItem(category);
+        e.dataTransfer.effectAllowed = 'move';
+        e.currentTarget.classList.add('dragging');
+    };
+
+    const handleDragEnd = (e) => {
+        e.currentTarget.classList.remove('dragging');
+        setDraggedItem(null);
+        setDragOverItem(null);
+    };
+
+    const handleDragOver = (e, category) => {
+        e.preventDefault();
+        if (draggedItem && draggedItem.id !== category.id) {
+            setDragOverItem(category);
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDragOverItem(null);
+    };
+
+    const handleDrop = async (e, targetCategory) => {
+        e.preventDefault();
+        if (!draggedItem || draggedItem.id === targetCategory.id) return;
+
+        // Calculate new order
+        const newCategories = [...categories];
+        const draggedIndex = newCategories.findIndex(c => c.id === draggedItem.id);
+        const targetIndex = newCategories.findIndex(c => c.id === targetCategory.id);
+
+        // Remove dragged item and insert at new position
+        const [removed] = newCategories.splice(draggedIndex, 1);
+        newCategories.splice(targetIndex, 0, removed);
+
+        // Update local state immediately for smooth UX
+        setCategories(newCategories);
+        setDraggedItem(null);
+        setDragOverItem(null);
+
+        // Save to backend
+        try {
+            setIsSavingOrder(true);
+            const orderedIds = newCategories.map(c => c.id);
+            await categoriesApi.reorder(orderedIds);
+            showToast('Sıralama güncellendi');
+        } catch (err) {
+            console.error('Reorder error:', err);
+            showToast('Sıralama kaydedilemedi!', 'error');
+            // Revert on error
+            loadData();
+        } finally {
+            setIsSavingOrder(false);
         }
     };
 
@@ -202,9 +269,48 @@ const Categories = () => {
                 </div>
             )}
 
+            {/* Drag hint */}
+            <p style={{
+                fontSize: '0.875rem',
+                color: 'var(--color-text-muted)',
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+            }}>
+                <GripVertical size={16} />
+                Sıralamayı değiştirmek için kartları sürükleyip bırakın
+                {isSavingOrder && <Loader2 size={14} className="animate-spin" style={{ marginLeft: '0.5rem' }} />}
+            </p>
+
             <div className="category-grid">
                 {categories.map(cat => (
-                    <div key={cat.id} className="category-card card">
+                    <div
+                        key={cat.id}
+                        className={`category-card card ${dragOverItem?.id === cat.id ? 'drag-over' : ''}`}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, cat)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOver(e, cat)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, cat)}
+                        style={{
+                            cursor: 'grab',
+                            transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
+                            borderWidth: '2px',
+                            borderStyle: 'solid',
+                            borderColor: dragOverItem?.id === cat.id ? 'var(--color-primary)' : 'transparent'
+                        }}
+                    >
+                        <div className="drag-handle" style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            color: 'var(--color-text-muted)',
+                            cursor: 'grab'
+                        }}>
+                            <GripVertical size={18} />
+                        </div>
                         <div className="category-icon">
                             <Package size={28} />
                         </div>

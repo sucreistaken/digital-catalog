@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Palette, Maximize2, Settings, Upload, Loader2 } from 'lucide-react';
-import { productsApi } from '../utils/api';
-import { categories, colors, materials } from '../data/products';
+import { productsApi, categoriesApi } from '../utils/api';
+import { colors, materials } from '../data/products';
 import { useLanguage } from '../context/LanguageContext';
 import './ProductEditModal.css';
 
@@ -62,6 +62,29 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
 
     // Option to create separate products for each color variant
     const [createSeparateVariants, setCreateSeparateVariants] = useState(true);
+
+    // Categories from API
+    const [categories, setCategories] = useState([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+    // Fetch categories from API
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                setCategoriesLoading(true);
+                const data = await categoriesApi.getAll();
+                setCategories(data);
+            } catch (err) {
+                console.error('Kategoriler yüklenemedi:', err);
+                setCategories([]);
+            } finally {
+                setCategoriesLoading(false);
+            }
+        };
+        if (isOpen) {
+            loadCategories();
+        }
+    }, [isOpen]);
 
     // Initialize form with product data if editing
     useEffect(() => {

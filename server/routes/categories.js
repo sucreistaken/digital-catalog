@@ -82,6 +82,34 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// PUT reorder categories (drag & drop)
+router.put('/reorder/bulk', async (req, res) => {
+    try {
+        const { orderedIds } = req.body; // Array of category IDs in new order
+
+        if (!orderedIds || !Array.isArray(orderedIds)) {
+            return res.status(400).json({ error: 'orderedIds array gerekli' });
+        }
+
+        // Update each category's order
+        const updatePromises = orderedIds.map((id, index) =>
+            Category.findOneAndUpdate(
+                { id },
+                { order: index + 1 },
+                { new: true }
+            )
+        );
+
+        await Promise.all(updatePromises);
+
+        // Return updated categories
+        const categories = await Category.find().sort({ order: 1 });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // POST reset to defaults
 router.post('/reset', async (req, res) => {
     try {

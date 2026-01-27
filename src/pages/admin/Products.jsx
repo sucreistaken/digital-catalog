@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { products as defaultProducts, categories, materials, colors } from '../../data/products';
-import { productsApi } from '../../utils/api';
+import { products as defaultProducts, materials, colors } from '../../data/products';
+import { productsApi, categoriesApi } from '../../utils/api';
 import ProductEditModal from '../../components/ProductEditModal';
 import '../Dashboard.css';
 
@@ -13,6 +13,7 @@ const Products = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -20,9 +21,10 @@ const Products = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
 
-    // Load products from API
+    // Load products and categories from API
     useEffect(() => {
         loadProducts();
+        loadCategories();
     }, []);
 
     const loadProducts = async () => {
@@ -37,6 +39,15 @@ const Products = () => {
             setProducts(defaultProducts);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadCategories = async () => {
+        try {
+            const data = await categoriesApi.getAll();
+            setCategories(data);
+        } catch (err) {
+            console.error('Kategoriler yüklenemedi:', err);
         }
     };
 
