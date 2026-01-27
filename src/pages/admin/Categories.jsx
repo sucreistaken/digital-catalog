@@ -315,6 +315,9 @@ const Categories = () => {
                             <Package size={28} />
                         </div>
                         <h3>{getCategoryName(cat)}</h3>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'monospace', marginBottom: '8px' }}>
+                            {cat.id}
+                        </p>
                         <p className="product-count">{getProductCount(cat.id)} ürün</p>
                         <div className="category-actions">
                             <button className="btn btn-secondary btn-sm" onClick={() => openEditModal(cat)}>

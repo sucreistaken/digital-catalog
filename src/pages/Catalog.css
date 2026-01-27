@@ -515,3 +515,66 @@
         flex-direction: column;
     }
 }
+
+/* Color Filters in Toolbar */
+.color-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    margin-left: 12px;
+    margin-right: auto;
+}
+
+.color-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.color-filter-pill {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: white;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.color-filter-pill:hover {
+    transform: scale(1.1);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.color-filter-pill.active {
+    box-shadow: 0 0 0 2px white, 0 0 0 4px #0071e3;
+    transform: scale(1.1);
+}
+
+.color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.color-dot.all {
+    background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+    opacity: 0.8;
+}
+
+.color-filter-pill span {
+    display: none;
+}
+
+/* Specific case for 'All' button if we want it to be text instead of rainbow dot */
+/* But rainbow dot is cooler for color filter. Or we can use a text pill for 'All' */
+.color-filter-pill:first-child .color-dot.all {
+    width: 20px;
+    height: 20px;
+}

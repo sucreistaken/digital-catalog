@@ -116,7 +116,8 @@ router.post('/with-variants', async (req, res) => {
                     hex: variant.hex || '#808080'
                 },
                 colorVariants: [variant], // Store the variant info for filtering
-                colors: [variant.colorId]
+                colors: [variant.colorId],
+                defaultColor: variant.colorId
             });
             await variantProduct.save();
             createdProducts.push(variantProduct);

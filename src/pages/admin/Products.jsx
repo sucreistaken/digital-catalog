@@ -325,7 +325,12 @@ const Products = () => {
                                     </div>
                                 </td>
                                 <td className="sku-cell">{product.sku}</td>
-                                <td>{getCategoryName(product.category)}</td>
+                                <td>
+                                    {getCategoryName(product.category)}
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                                        {product.category}
+                                    </div>
+                                </td>
                                 <td>{product.dimensions?.width}×{product.dimensions?.height}×{product.dimensions?.depth} cm</td>
                                 <td>{product.weight} kg</td>
                                 <td>

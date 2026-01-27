@@ -27,7 +27,16 @@ const getColor = (colorId) => colors.find(c => c.id === colorId);
 const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProducts, onSwitchProduct, categories }) => {
     if (!product) return null;
 
-    const [selectedColor, setSelectedColor] = useState(null);
+    if (!product) return null;
+
+    // Initialize with default color if available
+    const [selectedColor, setSelectedColor] = useState(product.primaryColor?.id || product.defaultColor || null);
+
+    // Update selected color if product changes (safety check, though component remounts usually handle this)
+    useEffect(() => {
+        setSelectedColor(product.primaryColor?.id || product.defaultColor || null);
+    }, [product]);
+
     const material = getMaterial(product.material);
     const categoryObj = categories.find(c => c.id === product.category);
 
@@ -183,13 +192,32 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
 const ProductCard = ({ product, onClick, language, t }) => {
     // Calculate scale style from saved imageScale
     const getImageStyle = () => {
+        let style = { transition: 'transform 0.3s ease, filter 0.3s ease' };
+
         const scale = product.imageScale || 100;
         // Normalize scale: 100% = 1, range 50-200 maps to 0.7-1.3 for subtle visual effect
         const normalizedScale = 0.7 + ((scale - 50) / 150) * 0.6;
-        return {
-            transform: `scale(${normalizedScale})`,
-            transition: 'transform 0.3s ease'
-        };
+        style.transform = `scale(${normalizedScale})`;
+
+        // Apply Color Filter
+        // Priority: 
+        // 1. activeColor (if passed as prop - currently removed)
+        // 2. defaultColor (manually set in admin)
+        // 3. primaryColor (for auto-generated variant products)
+        // 1. activeColor (if passed as prop - currently removed)
+        // 2. primaryColor (for auto-generated variant products)
+        // 3. defaultColor (manually set in admin)
+        const displayColor = product.primaryColor?.id || product.defaultColor;
+
+        if (displayColor) {
+            // Find variant for this color to get hue/saturation
+            const variant = product.colorVariants?.find(v => v.colorId === displayColor);
+            if (variant) {
+                style.filter = `hue-rotate(${variant.hue}deg) saturate(${variant.saturation / 100})`;
+            }
+        }
+
+        return style;
     };
 
     return (
@@ -318,6 +346,7 @@ const Catalog = () => {
                         </button>
                     ))}
                 </div>
+
                 <div className="search-box">
                     <Search size={18} />
                     <input

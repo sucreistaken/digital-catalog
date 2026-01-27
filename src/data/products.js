@@ -18,10 +18,19 @@ export const colors = [
     { id: 'yellow', name: 'Yellow', hex: '#FFCC00' },
     { id: 'gray', name: 'Gray', hex: '#8E8E93' },
     { id: 'brown', name: 'Brown', hex: '#A2845E' },
-    { id: 'beige', name: 'Beige', hex: '#F5F5DC' },
-    { id: 'terracotta', name: 'Terracotta', hex: '#E2725B' },
+    { id: 'beige', name: 'Beige', hex: '#E5D0B1' }
 ];
 
+export const fabricaColors = [
+    { name: 'Sarı', hue: 50, hex: '#FFCC00' },
+    { name: 'Kırmızı', hue: 0, hex: '#FF3B30' },
+    { name: 'Mavi', hue: 210, hex: '#007AFF' },
+    { name: 'Yeşil', hue: 140, hex: '#34C759' },
+    { name: 'Mor', hue: 280, hex: '#AF52DE' },
+    { name: 'Turuncu', hue: 25, hex: '#FF9500' },
+    { name: 'Turkuaz', hue: 180, hex: '#5AC8FA' },
+    { name: 'Pembe', hue: 320, hex: '#FF2D55' }
+];
 export const materials = [
     { id: 'pp', name: 'Polypropylene (PP)', description: 'Durable, chemical resistant' },
     { id: 'hdpe', name: 'High-Density Polyethylene (HDPE)', description: 'UV resistant, weatherproof' },

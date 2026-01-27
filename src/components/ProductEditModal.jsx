@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Palette, Maximize2, Settings, Upload, Loader2 } from 'lucide-react';
+import { X, Plus, Trash2, Palette, Maximize2, Settings, Upload, Loader2, Star } from 'lucide-react';
 import { productsApi, categoriesApi } from '../utils/api';
 import { colors, materials } from '../data/products';
 import { useLanguage } from '../context/LanguageContext';
 import './ProductEditModal.css';
 
-// Fabrika color presets with their hue values
-const fabricaColors = [
-    { name: 'Sarı', hue: 50, hex: '#FFCC00' },
-    { name: 'Kırmızı', hue: 0, hex: '#FF3B30' },
-    { name: 'Mavi', hue: 210, hex: '#007AFF' },
-    { name: 'Yeşil', hue: 140, hex: '#34C759' },
-    { name: 'Mor', hue: 280, hex: '#AF52DE' },
-];
+// Basic colors as metadata
+import { fabricaColors as presetFabricaColors } from '../data/products';
+
+// If loaded from API later, we can dynamic them. For now use mock.
+const fabricaColors = presetFabricaColors;
 
 const defaultSizeVariants = [
     { id: 'S', label: 'Small', labelTr: 'Küçük', dimensions: { width: 100, height: 80 } },
@@ -39,20 +36,20 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
         weight: 1.0,
     });
 
-    // Color variants state - each color has its own filter settings
+    // Color states
     const [colorVariants, setColorVariants] = useState([]);
     const [selectedColorVariant, setSelectedColorVariant] = useState(null);
     const [currentHue, setCurrentHue] = useState(0);
     const [currentSaturation, setCurrentSaturation] = useState(100);
     const [isEditingExistingVariant, setIsEditingExistingVariant] = useState(false);
+    const [defaultColorId, setDefaultColorId] = useState(null);
 
-    // Size variants state
+    // Size states
     const [sizeVariants, setSizeVariants] = useState(defaultSizeVariants);
     const [selectedSize, setSelectedSize] = useState('M');
+    const [imageScale, setImageScale] = useState(product?.imageScale || 100); // 50-200%
+    const [baseDimensions, setBaseDimensions] = useState(product?.dimensions || { width: 150, height: 120 });
 
-    // Visual scale state for size adjustment
-    const [imageScale, setImageScale] = useState(100); // 50-200%
-    const [baseDimensions, setBaseDimensions] = useState({ width: 150, height: 120 });
 
     // Active tab
     const [activeTab, setActiveTab] = useState('color');
@@ -108,6 +105,17 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             if (product.colorVariants) {
                 setColorVariants(product.colorVariants);
             }
+            if (product.defaultColor) {
+                setDefaultColorId(product.defaultColor);
+            } else if (product.colors && product.colors.length > 0) {
+                setDefaultColorId(product.colors[0]);
+            }
+            if (product.imageScale) {
+                setImageScale(product.imageScale);
+            }
+            if (product.dimensions) {
+                setBaseDimensions(product.dimensions);
+            }
         }
     }, [product]);
 
@@ -156,7 +164,11 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
         } else {
             // Create a new variant with default values
             const colorInfo = colors.find(c => c.id === colorId);
-            const fabricaPreset = fabricaColors.find(f => f.name.toLowerCase() === colorId.toLowerCase());
+            // Try to find matching factory preset to initialize Hue
+            const fabricaPreset = fabricaColors.find(f =>
+                f.hex.toLowerCase() === colorInfo.hex.toLowerCase()
+            );
+
             const newVariant = {
                 id: `color-${Date.now()}`,
                 colorId,
@@ -169,6 +181,15 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             setCurrentSaturation(newVariant.saturation);
             setIsEditingExistingVariant(false);
         }
+    };
+
+    // Real-time Slider Updates (only updates local state, applied on Add/Update)
+    const handleHueChange = (val) => {
+        setCurrentHue(parseInt(val));
+    };
+
+    const handleSaturationChange = (val) => {
+        setCurrentSaturation(parseInt(val));
     };
 
     // Apply fabrica preset to current selection
@@ -293,6 +314,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             imageScale: imageScale,
             colorVariants: enrichedColorVariants,
             colors: enrichedColorVariants.length > 0 ? enrichedColorVariants.map(v => v.colorId) : ['white'],
+            defaultColor: defaultColorId || (enrichedColorVariants.length > 0 ? enrichedColorVariants[0].colorId : 'white'),
             createSeparateVariants, // Flag to indicate if variants should be created as separate products
         };
         onSave(productData);
@@ -383,7 +405,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                             {fabricaColors.map(color => (
                                                 <button
                                                     key={color.name}
-                                                    className={`color-preset ${currentHue === color.hue ? 'active' : ''}`}
+                                                    className={`color-preset ${Math.abs(currentHue - color.hue) < 10 ? 'active' : ''}`}
                                                     style={{ backgroundColor: color.hex }}
                                                     onClick={() => handleFabricaColorSelect(color)}
                                                     title={color.name}
@@ -407,7 +429,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                                 min="0"
                                                 max="360"
                                                 value={currentHue}
-                                                onChange={e => setCurrentHue(parseInt(e.target.value))}
+                                                onChange={e => handleHueChange(e.target.value)}
                                                 className="hue-slider"
                                                 style={{
                                                     background: `linear-gradient(to right, 
@@ -432,7 +454,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                                 min="0"
                                                 max="200"
                                                 value={currentSaturation}
-                                                onChange={e => setCurrentSaturation(parseInt(e.target.value))}
+                                                onChange={e => handleSaturationChange(e.target.value)}
                                                 className="saturation-slider"
                                             />
                                         </div>
@@ -477,7 +499,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                             </h5>
                                             <div className="saved-variants">
                                                 {colorVariants.map(variant => (
-                                                    <div key={variant.id} className="saved-variant-item">
+                                                    <div key={variant.id} className={`saved-variant-item ${defaultColorId === variant.colorId ? 'is-default' : ''}`}>
                                                         <span
                                                             className="variant-color"
                                                             style={{
@@ -485,22 +507,34 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                                                 filter: `hue-rotate(${variant.hue}deg) saturate(${variant.saturation / 100})`
                                                             }}
                                                         />
-                                                        <span className="variant-name">{variant.colorName}</span>
-                                                        <span className="variant-info">Hue: {variant.hue}°</span>
-                                                        <button
-                                                            className="preview-btn"
-                                                            onClick={() => handlePreviewColorVariant(variant)}
-                                                            title="Önizle"
-                                                        >
-                                                            👁
-                                                        </button>
-                                                        <button
-                                                            className="remove-btn"
-                                                            onClick={() => handleRemoveColorVariant(variant.id)}
-                                                            title="Sil"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
+                                                        <div className="variant-details">
+                                                            <span className="variant-name">{variant.colorName}</span>
+                                                            <span className="variant-info">Hue: {variant.hue}°</span>
+                                                            {defaultColorId === variant.colorId && <span className="default-badge">Varsayılan</span>}
+                                                        </div>
+                                                        <div className="variant-buttons">
+                                                            <button
+                                                                className="preview-btn"
+                                                                onClick={() => handlePreviewColorVariant(variant)}
+                                                                title="Önizle"
+                                                            >
+                                                                👁
+                                                            </button>
+                                                            <button
+                                                                className={`default-color-btn ${defaultColorId === variant.colorId ? 'active' : ''}`}
+                                                                onClick={() => setDefaultColorId(variant.colorId)}
+                                                                title={defaultColorId === variant.colorId ? "Varsayılan Renk" : "Varsayılan Yap"}
+                                                            >
+                                                                <Star size={16} fill={defaultColorId === variant.colorId ? "#FFD700" : "none"} color={defaultColorId === variant.colorId ? "#FFD700" : "currentColor"} />
+                                                            </button>
+                                                            <button
+                                                                className="remove-btn"
+                                                                onClick={() => handleRemoveColorVariant(variant.id)}
+                                                                title="Sil"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -689,6 +723,43 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                                     <span>Yükle</span>
                                                 </label>
                                             </div>
+                                        </div>
+
+                                        <div className="form-group full-width">
+                                            <label>Görseldeki Ürün Rengi (Otomatik Varyant Ekler)</label>
+                                            <div className="color-options small-gap">
+                                                {colors.map(color => (
+                                                    <button
+                                                        key={color.id}
+                                                        className={`color-option ${defaultColorId === color.id ? 'selected' : ''}`}
+                                                        style={{ backgroundColor: color.hex, width: '24px', height: '24px' }}
+                                                        onClick={() => {
+                                                            // Set as default color
+                                                            setDefaultColorId(color.id);
+
+                                                            // Auto-add or update variant to be "Original" (No filter)
+                                                            const existingIndex = colorVariants.findIndex(v => v.colorId === color.id);
+                                                            const originalVariant = {
+                                                                id: `color-${Date.now()}`,
+                                                                colorId: color.id,
+                                                                colorName: color.name,
+                                                                hue: 0,
+                                                                saturation: 100, // No filter effect
+                                                            };
+
+                                                            if (existingIndex >= 0) {
+                                                                // Update existing to be original (no filter)
+                                                                setColorVariants(prev => prev.map((v, i) => i === existingIndex ? { ...v, hue: 0, saturation: 100 } : v));
+                                                            } else {
+                                                                // Add new
+                                                                setColorVariants(prev => [...prev, originalVariant]);
+                                                            }
+                                                        }}
+                                                        title={`${color.name} (Görsel Rengi)`}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <p className="field-hint">Yüklediğiniz fotoğrafın rengini seçin. Bu renk otomatik olarak varyantlara eklenecektir.</p>
                                         </div>
                                         <div className="form-group checkbox-group">
                                             <label>

@@ -49,7 +49,8 @@ const productSchema = new mongoose.Schema({
         id: String,
         name: String,
         hex: String
-    }
+    },
+    defaultColor: { type: String } // User selected default color for display
 }, {
     timestamps: true // createdAt, updatedAt otomatik ekler
 });
