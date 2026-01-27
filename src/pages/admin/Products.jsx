@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2, GripVertical } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { products as defaultProducts, materials, colors } from '../../data/products';
 import { productsApi, categoriesApi } from '../../utils/api';
@@ -20,6 +20,19 @@ const Products = () => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+
+    // Drag & Drop state
+    const [draggedItem, setDraggedItem] = useState(null);
+    const [dragOverItem, setDragOverItem] = useState(null);
+    const [isSavingOrder, setIsSavingOrder] = useState(false);
+
+    // Toast notification state
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     // Load products and categories from API
     useEffect(() => {
@@ -69,14 +82,18 @@ const Products = () => {
         return matchesSearch && matchesCategory;
     });
 
+    // Check if drag & drop should be enabled (only when no filters are active)
+    const isDragEnabled = searchQuery === '' && selectedCategory === 'all';
+
     const handleDelete = async (id) => {
         if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
             try {
                 await productsApi.delete(id);
                 setProducts(products.filter(p => (p._id || p.id) !== id));
+                showToast('Ürün silindi');
             } catch (err) {
                 console.error('Delete error:', err);
-                alert('Silme işlemi başarısız!');
+                showToast('Silme işlemi başarısız!', 'error');
             }
         }
     };
@@ -99,27 +116,109 @@ const Products = () => {
                 setProducts(products.map(p =>
                     (p._id || p.id) === (updated._id || updated.id) ? updated : p
                 ));
+                showToast('Ürün güncellendi');
             } else {
                 // Add new product(s)
                 if (productData.createSeparateVariants && productData.colorVariants?.length > 0) {
                     // Create separate product for each color variant
                     const createdProducts = await productsApi.createWithVariants(productData);
                     setProducts([...createdProducts, ...products]);
-                    alert(`${createdProducts.length} ürün başarıyla oluşturuldu!`);
+                    showToast(`${createdProducts.length} ürün başarıyla oluşturuldu!`);
                 } else {
                     // Create single product
                     const created = await productsApi.create(productData);
                     setProducts([created, ...products]);
+                    showToast('Ürün eklendi');
                 }
             }
         } catch (err) {
             console.error('Save error:', err);
-            alert('Kaydetme işlemi başarısız!');
+            showToast('Kaydetme işlemi başarısız!', 'error');
+        }
+    };
+
+    // Drag & Drop handlers
+    const handleDragStart = (e, product) => {
+        if (!isDragEnabled) return;
+        setDraggedItem(product);
+        e.dataTransfer.effectAllowed = 'move';
+        e.currentTarget.classList.add('dragging');
+    };
+
+    const handleDragEnd = (e) => {
+        e.currentTarget.classList.remove('dragging');
+        setDraggedItem(null);
+        setDragOverItem(null);
+    };
+
+    const handleDragOver = (e, product) => {
+        e.preventDefault();
+        if (!isDragEnabled) return;
+        if (draggedItem && (draggedItem._id || draggedItem.id) !== (product._id || product.id)) {
+            setDragOverItem(product);
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDragOverItem(null);
+    };
+
+    const handleDrop = async (e, targetProduct) => {
+        e.preventDefault();
+        if (!isDragEnabled) return;
+        if (!draggedItem || (draggedItem._id || draggedItem.id) === (targetProduct._id || targetProduct.id)) return;
+
+        // Calculate new order
+        const newProducts = [...products];
+        const draggedIndex = newProducts.findIndex(p => (p._id || p.id) === (draggedItem._id || draggedItem.id));
+        const targetIndex = newProducts.findIndex(p => (p._id || p.id) === (targetProduct._id || targetProduct.id));
+
+        // Remove dragged item and insert at new position
+        const [removed] = newProducts.splice(draggedIndex, 1);
+        newProducts.splice(targetIndex, 0, removed);
+
+        // Update local state immediately for smooth UX
+        setProducts(newProducts);
+        setDraggedItem(null);
+        setDragOverItem(null);
+
+        // Save to backend
+        try {
+            setIsSavingOrder(true);
+            const orderedIds = newProducts.map(p => p._id || p.id);
+            await productsApi.reorder(orderedIds);
+            showToast('Sıralama güncellendi');
+        } catch (err) {
+            console.error('Reorder error:', err);
+            showToast('Sıralama kaydedilemedi!', 'error');
+            // Revert on error
+            loadProducts();
+        } finally {
+            setIsSavingOrder(false);
         }
     };
 
     return (
         <div className="admin-page">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`toast-notification ${toast.type}`} style={{
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    background: toast.type === 'error' ? '#ef4444' : '#22c55e',
+                    color: 'white',
+                    fontWeight: '500',
+                    zIndex: 10000,
+                    animation: 'slideIn 0.3s ease',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}>
+                    {toast.message}
+                </div>
+            )}
+
             <header className="admin-header">
                 <div>
                     <h1 className="text-h2">{t('products')}</h1>
@@ -158,14 +257,33 @@ const Products = () => {
                         <option key={cat.id} value={cat.id}>{getCategoryName(cat.id)}</option>
                     ))}
                 </select>
-                <span className="results-count">{filteredProducts.length} ürün</span>
+                <span className="results-count">
+                    {filteredProducts.length} ürün
+                    {isSavingOrder && <Loader2 size={14} className="animate-spin" style={{ marginLeft: '8px' }} />}
+                </span>
             </div>
+
+            {/* Drag hint */}
+            {isDragEnabled && (
+                <p style={{
+                    fontSize: '0.875rem',
+                    color: 'var(--color-text-muted)',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                }}>
+                    <GripVertical size={16} />
+                    Sıralamayı değiştirmek için satırları sürükleyip bırakın
+                </p>
+            )}
 
             {/* Products Table */}
             <div className="data-table card">
                 <table>
                     <thead>
                         <tr>
+                            {isDragEnabled && <th style={{ width: '40px' }}></th>}
                             <th>Ürün</th>
                             <th>SKU</th>
                             <th>Kategori</th>
@@ -178,7 +296,28 @@ const Products = () => {
                     </thead>
                     <tbody>
                         {filteredProducts.map(product => (
-                            <tr key={product._id || product.id}>
+                            <tr
+                                key={product._id || product.id}
+                                draggable={isDragEnabled}
+                                onDragStart={(e) => handleDragStart(e, product)}
+                                onDragEnd={handleDragEnd}
+                                onDragOver={(e) => handleDragOver(e, product)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDrop(e, product)}
+                                style={{
+                                    cursor: isDragEnabled ? 'grab' : 'default',
+                                    transition: 'background-color 0.2s, border-color 0.2s',
+                                    borderLeft: dragOverItem && (dragOverItem._id || dragOverItem.id) === (product._id || product.id)
+                                        ? '3px solid var(--color-primary)'
+                                        : '3px solid transparent'
+                                }}
+                                className={dragOverItem && (dragOverItem._id || dragOverItem.id) === (product._id || product.id) ? 'drag-over' : ''}
+                            >
+                                {isDragEnabled && (
+                                    <td style={{ color: 'var(--color-text-muted)', cursor: 'grab' }}>
+                                        <GripVertical size={16} />
+                                    </td>
+                                )}
                                 <td>
                                     <div className="product-cell">
                                         <img src={product.image} alt="" className="product-thumb" />
@@ -191,11 +330,11 @@ const Products = () => {
                                 <td>{product.weight} kg</td>
                                 <td>
                                     <div className="color-dots">
-                                        {product.colors.slice(0, 4).map(colorId => {
+                                        {product.colors?.slice(0, 4).map(colorId => {
                                             const color = colors.find(c => c.id === colorId);
                                             return <span key={colorId} className="color-dot" style={{ backgroundColor: color?.hex }} />;
                                         })}
-                                        {product.colors.length > 4 && <span className="more">+{product.colors.length - 4}</span>}
+                                        {product.colors?.length > 4 && <span className="more">+{product.colors.length - 4}</span>}
                                     </div>
                                 </td>
                                 <td>

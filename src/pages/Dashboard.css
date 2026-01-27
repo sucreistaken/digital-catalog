@@ -717,6 +717,36 @@
     }
 }
 
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Table Row Drag & Drop */
+.data-table tr.dragging {
+    opacity: 0.5;
+    background: var(--color-bg-surface);
+}
+
+.data-table tr.drag-over {
+    background: var(--color-primary-light);
+}
+
+.data-table tr[draggable="true"]:hover {
+    cursor: grab;
+}
+
+.data-table tr[draggable="true"]:active {
+    cursor: grabbing;
+}
+
 /* Product Selection & Grouping */
 .row-selected td {
     background-color: rgba(175, 82, 222, 0.05);

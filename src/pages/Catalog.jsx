@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { categories, colors, materials } from '../data/products';
-import { productsApi } from '../utils/api';
+import { colors, materials } from '../data/products';
+import { productsApi, categoriesApi } from '../utils/api';
 import './Catalog.css';
 
 // Get localized product name
@@ -24,7 +24,7 @@ const getMaterial = (materialId) => materials.find(m => m.id === materialId);
 const getColor = (colorId) => colors.find(c => c.id === colorId);
 
 // Product Modal (Standard Version)
-const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProducts, onSwitchProduct }) => {
+const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProducts, onSwitchProduct, categories }) => {
     if (!product) return null;
 
     const [selectedColor, setSelectedColor] = useState(null);
@@ -230,11 +230,13 @@ const Catalog = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Load products from API
+    // Load products and categories from API
     useEffect(() => {
         loadProducts();
+        loadCategories();
     }, []);
 
     const loadProducts = async () => {
@@ -247,6 +249,16 @@ const Catalog = () => {
             setProducts([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadCategories = async () => {
+        try {
+            const data = await categoriesApi.getAll();
+            setCategories(data);
+        } catch (err) {
+            console.error('Kategoriler yüklenemedi:', err);
+            setCategories([]);
         }
     };
 
@@ -275,6 +287,7 @@ const Catalog = () => {
                     t={t}
                     allProducts={products}
                     onSwitchProduct={setSelectedProduct}
+                    categories={categories}
                 />
             )}
 

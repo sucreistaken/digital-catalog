@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 // GET all products
 router.get('/', async (req, res) => {
     try {
-        const products = await Product.find().sort({ createdAt: -1 });
+        const products = await Product.find().sort({ order: 1, createdAt: -1 });
         res.json(products);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -55,6 +55,34 @@ router.delete('/:id', async (req, res) => {
         const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) return res.status(404).json({ error: 'Ürün bulunamadı' });
         res.json({ success: true, message: 'Ürün silindi' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PUT reorder products (drag & drop)
+router.put('/reorder/bulk', async (req, res) => {
+    try {
+        const { orderedIds } = req.body; // Array of product IDs in new order
+
+        if (!orderedIds || !Array.isArray(orderedIds)) {
+            return res.status(400).json({ error: 'orderedIds array gerekli' });
+        }
+
+        // Update each product's order
+        const updatePromises = orderedIds.map((id, index) =>
+            Product.findByIdAndUpdate(
+                id,
+                { order: index + 1 },
+                { new: true }
+            )
+        );
+
+        await Promise.all(updatePromises);
+
+        // Return updated products
+        const products = await Product.find().sort({ order: 1, createdAt: -1 });
+        res.json(products);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

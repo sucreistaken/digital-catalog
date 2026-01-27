@@ -91,6 +91,17 @@ export const productsApi = {
         });
         if (!res.ok) throw new Error('Grup senkronizasyonu başarısız');
         return res.json();
+    },
+
+    // Reorder products (drag & drop)
+    reorder: async (orderedIds) => {
+        const res = await fetch(`${API_BASE_URL}/products/reorder/bulk`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds })
+        });
+        if (!res.ok) throw new Error('Sıralama güncellenemedi');
+        return res.json();
     }
 };
 
