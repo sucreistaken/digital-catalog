@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2, GripVertical } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { products as defaultProducts, materials, colors } from '../../data/products';
+import { generateProductCatalog } from '../../utils/pdfGenerator';
 import { productsApi, categoriesApi } from '../../utils/api';
 import ProductEditModal from '../../components/ProductEditModal';
 import '../Dashboard.css';
@@ -11,11 +12,12 @@ const Products = () => {
 
     // Original State
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedCategory, setSearchCategory] = useState('all');
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,6 +86,20 @@ const Products = () => {
 
     // Check if drag & drop should be enabled (only when no filters are active)
     const isDragEnabled = searchQuery === '' && selectedCategory === 'all';
+
+    const handleExportPdf = async () => {
+        setIsExporting(true);
+        try {
+            // Pass filtered products so admin can filter then export specific lists
+            await generateProductCatalog(filteredProducts, categories);
+            showToast('PDF başarıyla oluşturuldu');
+        } catch (error) {
+            console.error('PDF Export Error:', error);
+            showToast('PDF oluşturulamadı', 'error');
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const handleDelete = async (id) => {
         if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
@@ -225,8 +241,12 @@ const Products = () => {
                     <p className="text-body">Ürün kataloğunuzu yönetin</p>
                 </div>
                 <div className="header-actions">
-                    <button className="btn btn-secondary">
-                        <Download size={18} />
+                    <button
+                        className="btn btn-secondary"
+                        onClick={handleExportPdf}
+                        disabled={isExporting}
+                    >
+                        {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                         Dışa Aktar
                     </button>
                     <button className="btn btn-primary" onClick={handleAddProduct}>

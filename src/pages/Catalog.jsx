@@ -304,6 +304,34 @@ const Catalog = () => {
         window.location.href = `/quote?product=${product._id || product.id}`;
     };
 
+    const scrollContainerRef = React.useRef(null);
+    const [showLeftScroll, setShowLeftScroll] = useState(false);
+    const [showRightScroll, setShowRightScroll] = useState(false);
+
+    const checkScroll = () => {
+        if (scrollContainerRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+            setShowLeftScroll(scrollLeft > 0);
+            setShowRightScroll(scrollLeft < scrollWidth - clientWidth - 10);
+        }
+    };
+
+    useEffect(() => {
+        checkScroll();
+        window.addEventListener('resize', checkScroll);
+        return () => window.removeEventListener('resize', checkScroll);
+    }, [categories]);
+
+    const scroll = (direction) => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = 200;
+            scrollContainerRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     return (
         <div className="catalog">
             {selectedProduct && (
@@ -329,22 +357,42 @@ const Catalog = () => {
 
             {/* Toolbar */}
             <section className="catalog-toolbar container">
-                <div className="category-pills">
-                    <button
-                        className={`category-pill ${activeCategory === 'all' ? 'active' : ''}`}
-                        onClick={() => setActiveCategory('all')}
-                    >
-                        {t('all')}
-                    </button>
-                    {categories.map(cat => (
-                        <button
-                            key={cat.id}
-                            className={`category-pill ${activeCategory === cat.id ? 'active' : ''}`}
-                            onClick={() => setActiveCategory(cat.id)}
+                <div className="toolbar-left">
+                    <div className={`pills-wrapper ${showLeftScroll ? 'mask-left' : ''} ${showRightScroll ? 'mask-right' : ''}`}>
+                        {showLeftScroll && (
+                            <button className="scroll-btn left" onClick={() => scroll('left')}>
+                                <ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} />
+                            </button>
+                        )}
+
+                        <div
+                            className="category-pills"
+                            ref={scrollContainerRef}
+                            onScroll={checkScroll}
                         >
-                            {getCategoryName(cat, language)}
-                        </button>
-                    ))}
+                            <button
+                                className={`category-pill ${activeCategory === 'all' ? 'active' : ''}`}
+                                onClick={() => setActiveCategory('all')}
+                            >
+                                {t('all')}
+                            </button>
+                            {categories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    className={`category-pill ${activeCategory === cat.id ? 'active' : ''}`}
+                                    onClick={() => setActiveCategory(cat.id)}
+                                >
+                                    {getCategoryName(cat, language)}
+                                </button>
+                            ))}
+                        </div>
+
+                        {showRightScroll && (
+                            <button className="scroll-btn right" onClick={() => scroll('right')}>
+                                <ChevronRight size={20} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="search-box">

@@ -31,12 +31,12 @@
 
 /* Toolbar */
 .catalog-toolbar {
-    padding: 30px 24px;
+    padding: 20px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 24px;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: saturate(180%) blur(20px);
     position: sticky;
     top: 70px;
@@ -45,12 +45,47 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.category-pills {
+.toolbar-left {
+    flex: 1;
+    min-width: 0;
+    /* Crucial for flex child scroll */
+    position: relative;
+}
+
+.pills-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.catalog-toolbar .category-pills {
     display: flex;
     gap: 12px;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 4px 4px 8px 4px;
+    /* Space for shadow */
     scrollbar-width: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* Default: No mask */
+    mask-image: linear-gradient(to right, black 100%, black 100%);
+    -webkit-mask-image: linear-gradient(to right, black 100%, black 100%);
+}
+
+/* Dynamic Masking based on wrapper state */
+.pills-wrapper.mask-left .category-pills {
+    mask-image: linear-gradient(to right, transparent 0, black 60px);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 60px);
+}
+
+.pills-wrapper.mask-right .category-pills {
+    mask-image: linear-gradient(to left, transparent 0, black 60px);
+    -webkit-mask-image: linear-gradient(to left, transparent 0, black 60px);
+}
+
+.pills-wrapper.mask-left.mask-right .category-pills {
+    mask-image: linear-gradient(to right, transparent 0, black 60px, black calc(100% - 60px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 60px, black calc(100% - 60px), transparent 100%);
 }
 
 .category-pills::-webkit-scrollbar {
@@ -58,51 +93,115 @@
 }
 
 .category-pill {
-    padding: 8px 16px;
+    padding: 8px 18px;
     border-radius: 20px;
     font-size: 0.9rem;
     font-weight: 500;
     background: #f5f5f7;
     color: #1d1d1f;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     white-space: nowrap;
+    user-select: none;
 }
 
 .category-pill:hover {
     background: #e8e8ed;
+    transform: translateY(-1px);
 }
 
 .category-pill.active {
     background: #1d1d1f;
     color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    color: #1d1d1f;
+    opacity: 0;
+    /* Hidden by default */
+    pointer-events: none;
+}
+
+/* Show buttons on hover or when they are active logic dictates (handled by React state, but CSS opacity transition) */
+.pills-wrapper:hover .scroll-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Also ensure buttons are visible if we want them always visible on desktop, or just rely on hover. 
+   User asked for "Professional UX", usually hover is cleaner. 
+   But let's stick to opacity 1 for now or better yet, make them scale in. */
+
+.scroll-btn {
+    /* Resetting opacity to 1 for now as per previous strong usability */
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.scroll-btn:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.scroll-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.scroll-btn.left {
+    left: 0;
+}
+
+.scroll-btn.right {
+    right: 0;
 }
 
 .search-box {
     position: relative;
-    min-width: 280px;
+    min-width: 260px;
+    flex-shrink: 0;
+    /* Prevent shrinking */
 }
 
 .search-box input {
     width: 100%;
     padding: 10px 16px 10px 40px;
-    border-radius: 12px;
-    border: 1px solid #d2d2d7;
-    background: white;
+    border-radius: 20px;
+    /* More rounded */
+    border: 1px solid transparent;
+    background: #f5f5f7;
     font-size: 0.95rem;
     transition: all 0.2s ease;
 }
 
 .search-box input:focus {
     outline: none;
+    background: white;
     border-color: #0071e3;
     box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
 }
 
 .search-box svg {
     position: absolute;
-    left: 12px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
     color: #86868b;
