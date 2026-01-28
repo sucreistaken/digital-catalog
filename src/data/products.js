@@ -14,11 +14,19 @@ export const colors = [
     { id: 'black', name: 'Black', hex: '#1D1D1F' },
     { id: 'green', name: 'Green', hex: '#34C759' },
     { id: 'blue', name: 'Blue', hex: '#007AFF' },
+    { id: 'navy', name: 'Navy', hex: '#000080' },
     { id: 'red', name: 'Red', hex: '#FF3B30' },
+    { id: 'burgundy', name: 'Burgundy', hex: '#800020' },
     { id: 'yellow', name: 'Yellow', hex: '#FFCC00' },
+    { id: 'orange', name: 'Orange', hex: '#FF9500' },
     { id: 'gray', name: 'Gray', hex: '#8E8E93' },
+    { id: 'anthracite', name: 'Anthracite', hex: '#36454F' },
     { id: 'brown', name: 'Brown', hex: '#A2845E' },
-    { id: 'beige', name: 'Beige', hex: '#E5D0B1' }
+    { id: 'beige', name: 'Beige', hex: '#E5D0B1' },
+    { id: 'cream', name: 'Cream', hex: '#FFFDD0' },
+    { id: 'purple', name: 'Purple', hex: '#AF52DE' },
+    { id: 'pink', name: 'Pink', hex: '#FF2D55' },
+    { id: 'turquoise', name: 'Turquoise', hex: '#5AC8FA' }
 ];
 
 export const fabricaColors = [

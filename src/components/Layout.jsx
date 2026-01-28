@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Package, Folder, MessageSquare, Users, Settings, LogOut, ChevronDown, BarChart2 } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, LayoutDashboard, Package, Folder, MessageSquare, Users, Settings, LogOut, ChevronDown, BarChart2, FileText } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import '../styles/layout.css';
 import WhatsAppButton from './WhatsAppButton';
+import logo from '../assets/freegarden-logo.png';
 
 // Language Switcher Component
 const LanguageSwitcher = () => {
@@ -53,8 +55,7 @@ const PublicLayout = ({ children }) => {
         <div className="public-layout">
             <nav className="navbar">
                 <Link to="/" className="brand">
-                    <span className="brand-free">free</span>
-                    <span className="brand-garden">garden</span>
+                    <img src={logo} alt="FreeGarden" className="brand-logo" style={{ height: '60px' }} />
                 </Link>
 
                 <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
@@ -87,8 +88,7 @@ const PublicLayout = ({ children }) => {
                 <div className="footer-top container">
                     <div className="footer-brand-col">
                         <div className="footer-logo">
-                            <span className="brand-free">free</span>
-                            <span className="brand-garden">garden</span>
+                            <img src={logo} alt="FreeGarden" className="brand-logo" style={{ height: '60px' }} />
                         </div>
                         <p className="footer-desc">
                             {language === 'tr'
@@ -167,7 +167,14 @@ const PublicLayout = ({ children }) => {
 const AdminLayout = ({ children }) => {
     const { t } = useLanguage();
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     const menuItems = [
         { path: '/admin/dashboard', icon: LayoutDashboard, label: t('dashboard') },
@@ -175,6 +182,7 @@ const AdminLayout = ({ children }) => {
         { path: '/admin/categories', icon: Folder, label: t('categories') },
         { path: '/admin/quotes', icon: MessageSquare, label: t('quoteRequests') },
         { path: '/admin/customers', icon: Users, label: t('customers') },
+        { path: '/admin/content', icon: FileText, label: 'Site İçerikleri' },
         { path: '/admin/analytics', icon: BarChart2, label: 'Analytics' },
         { path: '/admin/settings', icon: Settings, label: t('settings') },
     ];
@@ -184,8 +192,7 @@ const AdminLayout = ({ children }) => {
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-brand">
                     <Link to="/" className="brand">
-                        <span className="brand-free">free</span>
-                        <span className="brand-garden">garden</span>
+                        <img src={logo} alt="FreeGarden" className="brand-logo" style={{ height: '40px' }} />
                     </Link>
                     <span className="admin-badge">Admin</span>
                 </div>
@@ -205,11 +212,20 @@ const AdminLayout = ({ children }) => {
                 </nav>
 
                 <div className="sidebar-footer">
+                    {user && (
+                        <div className="sidebar-user">
+                            <div className="user-avatar">{user.name?.charAt(0) || 'A'}</div>
+                            <div className="user-info">
+                                <span className="user-name">{user.name}</span>
+                                <span className="user-role">{user.role}</span>
+                            </div>
+                        </div>
+                    )}
                     <LanguageSwitcher />
-                    <Link to="/" className="sidebar-item">
+                    <button onClick={handleLogout} className="sidebar-item logout-btn">
                         <LogOut size={20} />
-                        <span>{t('exitAdmin')}</span>
-                    </Link>
+                        <span>Çıkış Yap</span>
+                    </button>
                 </div>
             </aside>
 

@@ -280,3 +280,179 @@ export const contactsApi = {
         return res.json();
     }
 };
+
+// Customers API (CRM)
+export const customersApi = {
+    getAll: async (search = '', tag = '', source = 'all') => {
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (tag) params.append('tag', tag);
+        if (source !== 'all') params.append('source', source);
+
+        const res = await fetch(`${API_BASE_URL}/customers?${params}`);
+        if (!res.ok) throw new Error('Müşteriler yüklenemedi');
+        return res.json();
+    },
+
+    getById: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/customers/${id}`);
+        if (!res.ok) throw new Error('Müşteri bulunamadı');
+        return res.json();
+    },
+
+    create: async (customer) => {
+        const res = await fetch(`${API_BASE_URL}/customers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(customer)
+        });
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Müşteri oluşturulamadı');
+        }
+        return res.json();
+    },
+
+    update: async (id, customer) => {
+        const res = await fetch(`${API_BASE_URL}/customers/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(customer)
+        });
+        if (!res.ok) throw new Error('Müşteri güncellenemedi');
+        return res.json();
+    },
+
+    delete: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/customers/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Müşteri silinemedi');
+        return res.json();
+    },
+
+    getStats: async () => {
+        const res = await fetch(`${API_BASE_URL}/customers/stats/summary`);
+        if (!res.ok) throw new Error('İstatistikler yüklenemedi');
+        return res.json();
+    }
+};
+
+// Auth API
+export const authApi = {
+    login: async (email, password) => {
+        const res = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Giriş başarısız');
+        }
+        return res.json();
+    },
+
+    me: async (token) => {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Oturum geçersiz');
+        return res.json();
+    },
+
+    seed: async () => {
+        const res = await fetch(`${API_BASE_URL}/auth/seed`, {
+            method: 'POST'
+        });
+        return res.json();
+    }
+};
+
+// Settings API (CMS)
+export const settingsApi = {
+    getAll: async () => {
+        const res = await fetch(`${API_BASE_URL}/settings`);
+        if (!res.ok) throw new Error('Ayarlar yüklenemedi');
+        return res.json();
+    },
+
+    get: async (key) => {
+        const res = await fetch(`${API_BASE_URL}/settings/${key}`);
+        if (!res.ok) throw new Error('Ayar bulunamadı');
+        return res.json();
+    },
+
+    update: async (settings) => {
+        const res = await fetch(`${API_BASE_URL}/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        if (!res.ok) throw new Error('Ayarlar güncellenemedi');
+        return res.json();
+    },
+
+    seed: async () => {
+        const res = await fetch(`${API_BASE_URL}/settings/seed`, {
+            method: 'POST'
+        });
+        return res.json();
+    }
+};
+
+// Pages API (CMS)
+export const pagesApi = {
+    getAll: async (activeOnly = false) => {
+        const params = activeOnly ? '?active=true' : '';
+        const res = await fetch(`${API_BASE_URL}/pages${params}`);
+        if (!res.ok) throw new Error('Sayfalar yüklenemedi');
+        return res.json();
+    },
+
+    getBySlug: async (slug) => {
+        const res = await fetch(`${API_BASE_URL}/pages/${slug}`);
+        if (!res.ok) throw new Error('Sayfa bulunamadı');
+        return res.json();
+    },
+
+    create: async (page) => {
+        const res = await fetch(`${API_BASE_URL}/pages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(page)
+        });
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Sayfa oluşturulamadı');
+        }
+        return res.json();
+    },
+
+    update: async (id, page) => {
+        const res = await fetch(`${API_BASE_URL}/pages/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(page)
+        });
+        if (!res.ok) throw new Error('Sayfa güncellenemedi');
+        return res.json();
+    },
+
+    delete: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/pages/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Sayfa silinemedi');
+        return res.json();
+    },
+
+    seed: async () => {
+        const res = await fetch(`${API_BASE_URL}/pages/seed`, {
+            method: 'POST'
+        });
+        return res.json();
+    }
+};
+
+

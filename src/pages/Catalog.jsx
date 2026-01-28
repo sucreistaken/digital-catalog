@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2, Copy, Check, Package, Layers, Hash, Droplets, ChevronDown, Filter } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, materials } from '../data/products';
 import { productsApi, categoriesApi } from '../utils/api';
@@ -62,6 +62,18 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
     // Determine current display color name
     const selectedColorName = getColor(selectedColor)?.name || '';
 
+    // Copy to clipboard
+    const [copied, setCopied] = useState(false);
+    const copyToClipboard = async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Copy failed:', err);
+        }
+    };
+
     return (
         <div className="product-modal-overlay" onClick={onClose}>
             <div className="product-modal" onClick={e => e.stopPropagation()}>
@@ -81,34 +93,67 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                     </div>
                     <div className="modal-details">
                         <div className="modal-header">
-                            <span className="modal-sku">{product.sku || 'SKU-000'}</span>
+                            <button
+                                className="modal-sku-btn"
+                                onClick={() => copyToClipboard(product.sku || product._id)}
+                                title="Tıkla ve kopyala"
+                            >
+                                <span>{product.sku || 'SKU-000'}</span>
+                                {copied ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
                             <h2>{getProductName(product, language) || 'Yeni Ürün'}</h2>
                             {categoryObj && (
-                                <span className="modal-category">
+                                <span className="modal-category-badge">
                                     {getCategoryName(categoryObj, language)}
                                 </span>
                             )}
                         </div>
 
-                        <p className="modal-description">
-                            {product[`description${language.charAt(0).toUpperCase() + language.slice(1)}`] || product.description}
-                        </p>
+                        {(product.description || product.descriptionTr) && (
+                            <p className="modal-description">
+                                {product[`description${language.charAt(0).toUpperCase() + language.slice(1)}`] || product.description}
+                            </p>
+                        )}
 
-                        <div className="modal-specs">
-                            <div className="spec-item">
-                                <label>{t('dimensions')}</label>
-                                <span>
-                                    {product.dimensions?.width || 0} × {product.dimensions?.height || 0} × {product.dimensions?.depth || 0} cm
+                        <div className="modal-specs-grid">
+                            <div className="spec-card">
+                                <Ruler size={18} />
+                                <span className="spec-label">{t('dimensions')}</span>
+                                <span className="spec-value">
+                                    {product.dimensions?.width || 0} × {product.dimensions?.height || 0} {product.dimensions?.depth > 0 ? `× ${product.dimensions.depth}` : ''} cm
                                 </span>
                             </div>
-                            <div className="spec-item">
-                                <label>{t('weight')}</label>
-                                <span>{product.weight || 0} kg</span>
+                            <div className="spec-card">
+                                <Weight size={18} />
+                                <span className="spec-label">{t('weight')}</span>
+                                <span className="spec-value">{product.weight || 0} kg</span>
                             </div>
                             {material && (
-                                <div className="spec-item">
-                                    <label>{t('material')}</label>
-                                    <span>{material.name}</span>
+                                <div className="spec-card">
+                                    <Layers size={18} />
+                                    <span className="spec-label">{t('material')}</span>
+                                    <span className="spec-value">{material.name}</span>
+                                </div>
+                            )}
+                            {product.volume > 0 && (
+                                <div className="spec-card">
+                                    <Droplets size={18} />
+                                    <span className="spec-label">{t('volume')}</span>
+                                    <span className="spec-value">{product.volume} Lt</span>
+                                </div>
+                            )}
+                            {product.piecesInPackage > 0 && (
+                                <div className="spec-card">
+                                    <Package size={18} />
+                                    <span className="spec-label">{t('piecesInPackage')}</span>
+                                    <span className="spec-value">{product.piecesInPackage} {product.packageType || ''}</span>
+                                </div>
+                            )}
+                            {product.productCode && (
+                                <div className="spec-card">
+                                    <Hash size={18} />
+                                    <span className="spec-label">{t('productCode')}</span>
+                                    <span className="spec-value">{product.productCode}</span>
                                 </div>
                             )}
                         </div>
@@ -171,14 +216,14 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                             )}
                         </div>
 
-                        <div className="modal-actions">
-                            <button className="btn-primary" onClick={() => onRequestQuote(product)}>
-                                <FileText size={20} />
+                        <div className="modal-actions-grid">
+                            <button className="modal-btn-primary" onClick={() => onRequestQuote(product)}>
+                                <FileText size={18} />
                                 <span>{language === 'tr' ? 'Teklif Al' : 'Get Quote'}</span>
                             </button>
-                            <a href="/showroom" className="btn-secondary">
-                                <Eye size={20} />
-                                <span>{language === 'tr' ? 'Showroom' : 'Showroom'}</span>
+                            <a href="/showroom" className="modal-btn-secondary">
+                                <Eye size={18} />
+                                <span>Showroom</span>
                             </a>
                         </div>
                     </div>
@@ -236,7 +281,7 @@ const ProductCard = ({ product, onClick, language, t }) => {
                 <span className="product-sku">{product.sku || 'SKU-000'}</span>
                 <h3>{getProductName(product, language) || 'Yeni Ürün'}</h3>
                 <div className="product-specs-mini">
-                    <span>{product.dimensions?.width || 0}×{product.dimensions?.height || 0}×{product.dimensions?.depth || 0} cm</span>
+                    <span>{product.dimensions?.width || 0}×{product.dimensions?.height || 0}{product.dimensions?.depth > 0 ? `×${product.dimensions.depth}` : ''} cm</span>
                     <span>•</span>
                     <span>{product.weight || 0} kg</span>
                 </div>
@@ -260,12 +305,26 @@ const Catalog = () => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const MAX_VISIBLE_CATEGORIES = 5;
 
     // Load products and categories from API
     useEffect(() => {
         loadProducts();
         loadCategories();
     }, []);
+
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        if (selectedProduct) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [selectedProduct]);
 
     const loadProducts = async () => {
         try {
@@ -348,96 +407,113 @@ const Catalog = () => {
             )}
 
             {/* Hero */}
-            <section className="catalog-hero">
-                <div className="container">
-                    <h1 className="text-h1">{t('ourProducts')}</h1>
-                    <p className="text-body">{t('premiumPlasticSolutions')}</p>
-                </div>
-            </section>
 
-            {/* Toolbar */}
-            <section className="catalog-toolbar container">
-                <div className="toolbar-left">
-                    <div className={`pills-wrapper ${showLeftScroll ? 'mask-left' : ''} ${showRightScroll ? 'mask-right' : ''}`}>
-                        {showLeftScroll && (
-                            <button className="scroll-btn left" onClick={() => scroll('left')}>
-                                <ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} />
-                            </button>
-                        )}
 
-                        <div
-                            className="category-pills"
-                            ref={scrollContainerRef}
-                            onScroll={checkScroll}
-                        >
+            {/* Main Content: Sidebar + Products */}
+            <div className="catalog-main container">
+                {/* Professional Sidebar Filter */}
+                <aside className="catalog-sidebar">
+                    <div className="sidebar-header">
+                        <h3 className="text-overline">{t('filters')}</h3>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <div className="search-input-wrapper">
+                            <Search size={16} className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder={t('searchProducts')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            {searchQuery && (
+                                <button className="search-clear-btn" onClick={() => setSearchQuery('')}>
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <h4 className="sidebar-subtitle">{language === 'tr' ? 'Kategoriler' : 'Categories'}</h4>
+                        <div className="category-vertical-list">
                             <button
-                                className={`category-pill ${activeCategory === 'all' ? 'active' : ''}`}
+                                className={`cat-row ${activeCategory === 'all' ? 'active' : ''}`}
                                 onClick={() => setActiveCategory('all')}
                             >
-                                {t('all')}
+                                <span className="cat-name">{t('all')}</span>
+                                <span className="cat-count">{products.length}</span>
                             </button>
                             {categories.map(cat => (
                                 <button
                                     key={cat.id}
-                                    className={`category-pill ${activeCategory === cat.id ? 'active' : ''}`}
+                                    className={`cat-row ${activeCategory === cat.id ? 'active' : ''}`}
                                     onClick={() => setActiveCategory(cat.id)}
                                 >
-                                    {getCategoryName(cat, language)}
+                                    <span className="cat-name">{getCategoryName(cat, language)}</span>
+                                    <span className="cat-count">
+                                        {products.filter(p => p.category === cat.id).length}
+                                    </span>
                                 </button>
                             ))}
                         </div>
-
-                        {showRightScroll && (
-                            <button className="scroll-btn right" onClick={() => scroll('right')}>
-                                <ChevronRight size={20} />
-                            </button>
-                        )}
                     </div>
-                </div>
 
-                <div className="search-box">
-                    <Search size={18} />
-                    <input
-                        type="text"
-                        placeholder={t('searchProducts')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-            </section>
-
-            {/* Products Count */}
-            <section className="container">
-                <p className="results-count">{filteredProducts.length} {t('products').toLowerCase()}</p>
-            </section>
-
-            {/* Products Grid */}
-            <section className="products-section container">
-                <div className="products-grid">
-                    {filteredProducts.map(product => (
-                        <ProductCard
-                            key={product._id || product.id}
-                            product={product}
-                            onClick={setSelectedProduct}
-                            language={language}
-                            t={t}
-                        />
-                    ))}
-                </div>
-
-                {filteredProducts.length === 0 && (
-                    <div className="no-results">
-                        <h3>No products found</h3>
-                        <p>Try adjusting your search or filter</p>
-                        <button className="btn btn-secondary" onClick={() => {
-                            setActiveCategory('all');
-                            setSearchQuery('');
-                        }}>
-                            Clear Filters
+                    {activeCategory !== 'all' && (
+                        <button
+                            className="reset-filters-btn"
+                            onClick={() => { setActiveCategory('all'); setSearchQuery(''); }}
+                        >
+                            {language === 'tr' ? 'Filtreleri Temizle' : 'Clear Filters'}
                         </button>
+                    )}
+                </aside>
+
+                {/* Products Grid */}
+                <div className="catalog-content">
+                    <div className="content-header">
+                        <div className="header-left">
+                            <h2 className="section-title">
+                                {activeCategory === 'all'
+                                    ? (language === 'tr' ? 'Tüm Ürünler' : 'All Products')
+                                    : getCategoryName(categories.find(c => c.id === activeCategory), language)
+                                }
+                            </h2>
+                            <p className="results-text">
+                                <strong>{filteredProducts.length}</strong> {t('products').toLowerCase()}
+                            </p>
+                        </div>
                     </div>
-                )}
-            </section>
+
+                    <div className="products-grid">
+                        {filteredProducts.map(product => (
+                            <ProductCard
+                                key={product._id || product.id}
+                                product={product}
+                                onClick={setSelectedProduct}
+                                language={language}
+                                t={t}
+                            />
+                        ))}
+                    </div>
+
+                    {filteredProducts.length === 0 && (
+                        <div className="no-results-state">
+                            <div className="no-results-icon">
+                                <Search size={48} />
+                            </div>
+                            <h3>{language === 'tr' ? 'Sonuç bulunamadı' : 'No products found'}</h3>
+                            <p>{language === 'tr' ? 'Arama kriterlerinizi değiştirmeyi deneyin.' : 'Try changing your search criteria.'}</p>
+                            <button className="btn btn-secondary" onClick={() => {
+                                setActiveCategory('all');
+                                setSearchQuery('');
+                            }}>
+                                {language === 'tr' ? 'Tüm Ürünleri Gör' : 'View All Products'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

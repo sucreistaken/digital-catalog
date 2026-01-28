@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2, GripVertical } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2, GripVertical, X, FileText, CheckCircle, FileSpreadsheet, Copy, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { products as defaultProducts, materials, colors } from '../../data/products';
 import { generateProductCatalog } from '../../utils/pdfGenerator';
@@ -18,6 +18,9 @@ const Products = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [exportProgress, setExportProgress] = useState(0);
+    const [exportComplete, setExportComplete] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,10 +33,23 @@ const Products = () => {
 
     // Toast notification state
     const [toast, setToast] = useState(null);
+    const [copiedId, setCopiedId] = useState(null);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
+    };
+
+    const copyToClipboard = async (text, productId) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopiedId(productId);
+            showToast('Kopyalandı: ' + text);
+            setTimeout(() => setCopiedId(null), 2000);
+        } catch (err) {
+            console.error('Copy failed:', err);
+            showToast('Kopyalama başarısız', 'error');
+        }
     };
 
     // Load products and categories from API
@@ -87,15 +103,50 @@ const Products = () => {
     // Check if drag & drop should be enabled (only when no filters are active)
     const isDragEnabled = searchQuery === '' && selectedCategory === 'all';
 
+    const openExportModal = () => {
+        setShowExportModal(true);
+        setExportProgress(0);
+        setExportComplete(false);
+        setIsExporting(false);
+    };
+
+    const closeExportModal = () => {
+        setShowExportModal(false);
+        setExportProgress(0);
+        setExportComplete(false);
+        setIsExporting(false);
+    };
+
     const handleExportPdf = async () => {
         setIsExporting(true);
+        setExportProgress(0);
+        setExportComplete(false);
+
         try {
-            // Pass filtered products so admin can filter then export specific lists
+            // Simulate progress for better UX
+            const progressInterval = setInterval(() => {
+                setExportProgress(prev => {
+                    if (prev >= 90) {
+                        clearInterval(progressInterval);
+                        return prev;
+                    }
+                    return prev + Math.random() * 15;
+                });
+            }, 200);
+
             await generateProductCatalog(filteredProducts, categories);
-            showToast('PDF başarıyla oluşturuldu');
+
+            clearInterval(progressInterval);
+            setExportProgress(100);
+            setExportComplete(true);
+
+            setTimeout(() => {
+                showToast('PDF başarıyla indirildi');
+            }, 500);
         } catch (error) {
             console.error('PDF Export Error:', error);
             showToast('PDF oluşturulamadı', 'error');
+            closeExportModal();
         } finally {
             setIsExporting(false);
         }
@@ -243,10 +294,9 @@ const Products = () => {
                 <div className="header-actions">
                     <button
                         className="btn btn-secondary"
-                        onClick={handleExportPdf}
-                        disabled={isExporting}
+                        onClick={openExportModal}
                     >
-                        {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                        <Download size={18} />
                         Dışa Aktar
                     </button>
                     <button className="btn btn-primary" onClick={handleAddProduct}>
@@ -344,14 +394,30 @@ const Products = () => {
                                         <span className="product-name">{getProductName(product)}</span>
                                     </div>
                                 </td>
-                                <td className="sku-cell">{product.sku}</td>
+                                <td>
+                                    <button
+                                        className="sku-copy-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            copyToClipboard(product.sku || product._id || product.id, product._id || product.id);
+                                        }}
+                                        title="Tıkla ve kopyala"
+                                    >
+                                        <span className="sku-text">{product.sku}</span>
+                                        {copiedId === (product._id || product.id) ? (
+                                            <Check size={14} className="copy-icon copied" />
+                                        ) : (
+                                            <Copy size={14} className="copy-icon" />
+                                        )}
+                                    </button>
+                                </td>
                                 <td>
                                     {getCategoryName(product.category)}
                                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
                                         {product.category}
                                     </div>
                                 </td>
-                                <td>{product.dimensions?.width}×{product.dimensions?.height}×{product.dimensions?.depth} cm</td>
+                                <td>{product.dimensions?.width}×{product.dimensions?.height}{product.dimensions?.depth ? `×${product.dimensions.depth}` : ''} cm</td>
                                 <td>{product.weight} kg</td>
                                 <td>
                                     <div className="color-dots">
@@ -391,6 +457,92 @@ const Products = () => {
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSaveProduct}
             />
+
+            {/* Export Modal */}
+            {showExportModal && (
+                <div className="modal-overlay" onClick={closeExportModal}>
+                    <div className="export-modal" onClick={e => e.stopPropagation()}>
+                        <button className="modal-close-btn" onClick={closeExportModal}>
+                            <X size={20} />
+                        </button>
+
+                        <div className="export-modal-content">
+                            {!isExporting && !exportComplete ? (
+                                // Export Options
+                                <>
+                                    <div className="export-icon">
+                                        <FileText size={48} />
+                                    </div>
+                                    <h2>Katalog Dışa Aktar</h2>
+                                    <p className="export-subtitle">
+                                        {filteredProducts.length} ürün PDF olarak indirilecek
+                                    </p>
+
+                                    <div className="export-info">
+                                        <div className="info-item">
+                                            <span className="info-label">Format</span>
+                                            <span className="info-value">PDF Katalog</span>
+                                        </div>
+                                        <div className="info-item">
+                                            <span className="info-label">İçerik</span>
+                                            <span className="info-value">Görsel, Bilgi, Renkler</span>
+                                        </div>
+                                        <div className="info-item">
+                                            <span className="info-label">Kağıt</span>
+                                            <span className="info-value">A4 Dikey</span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        className="btn btn-primary export-btn"
+                                        onClick={handleExportPdf}
+                                    >
+                                        <Download size={20} />
+                                        PDF İndir
+                                    </button>
+                                </>
+                            ) : isExporting && !exportComplete ? (
+                                // Progress State
+                                <>
+                                    <div className="export-progress-ring">
+                                        <svg viewBox="0 0 100 100">
+                                            <circle className="progress-bg" cx="50" cy="50" r="45" />
+                                            <circle
+                                                className="progress-fill"
+                                                cx="50" cy="50" r="45"
+                                                style={{
+                                                    strokeDasharray: `${2 * Math.PI * 45}`,
+                                                    strokeDashoffset: `${2 * Math.PI * 45 * (1 - exportProgress / 100)}`
+                                                }}
+                                            />
+                                        </svg>
+                                        <span className="progress-text">{Math.round(exportProgress)}%</span>
+                                    </div>
+                                    <h2>PDF Oluşturuluyor</h2>
+                                    <p className="export-subtitle">Lütfen bekleyin...</p>
+                                </>
+                            ) : (
+                                // Complete State
+                                <>
+                                    <div className="export-success-icon">
+                                        <CheckCircle size={64} />
+                                    </div>
+                                    <h2>İndirme Tamamlandı!</h2>
+                                    <p className="export-subtitle">
+                                        PDF dosyanız indirildi
+                                    </p>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={closeExportModal}
+                                    >
+                                        Kapat
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

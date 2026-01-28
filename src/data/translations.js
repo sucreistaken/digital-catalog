@@ -59,6 +59,12 @@ export const translations = {
         depthLabel: 'Depth',
         cm: 'cm',
         kg: 'kg',
+        volume: 'Volume',
+        packageType: 'Package Type',
+        piecesInPackage: 'Pcs in Box',
+        packageDimensions: 'Package Dimensions',
+        barcode: 'Barcode',
+        productCode: 'Product Code',
 
         // Quote Form
         requestAQuote: 'Request a Quote',
@@ -153,6 +159,12 @@ export const translations = {
         depthLabel: 'Derinlik',
         cm: 'cm',
         kg: 'kg',
+        volume: 'Hacim',
+        packageType: 'Paket Tipi',
+        piecesInPackage: 'Kutu İçi Adet',
+        packageDimensions: 'Koli Boyutu',
+        barcode: 'Barkod',
+        productCode: 'Ürün Kodu',
 
         // Quote Form
         requestAQuote: 'Teklif İsteyin',

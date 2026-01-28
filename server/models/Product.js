@@ -19,6 +19,17 @@ const productSchema = new mongoose.Schema({
         height: { type: Number },
         depth: { type: Number }
     },
+    // New Fields
+    productCode: { type: String }, // Extra product code
+    barcode: { type: String }, // EAN/UPC etc.
+    piecesInPackage: { type: Number }, // PCS in Box
+    packageType: { type: String, default: 'BOX' }, // Box, PP Bag, etc.
+    volume: { type: Number }, // Volume in LT
+    packageDimensions: {
+        width: { type: Number },
+        height: { type: Number },
+        depth: { type: Number }
+    },
     sizeVariants: [{
         id: String,
         label: String,

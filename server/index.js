@@ -33,12 +33,20 @@ const uploadRoutes = require('./routes/upload');
 const categoryRoutes = require('./routes/categories');
 const quoteRoutes = require('./routes/quotes');
 const contactRoutes = require('./routes/contacts');
+const authRoutes = require('./routes/auth');
+const customerRoutes = require('./routes/customers');
+const settingsRoutes = require('./routes/settings');
+const pagesRoutes = require('./routes/pages');
 
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/pages', pagesRoutes);
 
 
 // Health check

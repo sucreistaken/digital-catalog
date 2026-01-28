@@ -34,6 +34,14 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
         inStock: true,
         featured: false,
         weight: 1.0,
+        // New fields
+        productCode: '',
+        barcode: '',
+        piecesInPackage: '',
+        packageType: 'BOX',
+        volume: '',
+        packageDimensions: { width: 0, height: 0, depth: 0 },
+        dimensions: { width: 0, height: 0, depth: 0 },
     });
 
     // Color states
@@ -41,6 +49,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
     const [selectedColorVariant, setSelectedColorVariant] = useState(null);
     const [currentHue, setCurrentHue] = useState(0);
     const [currentSaturation, setCurrentSaturation] = useState(100);
+    const [currentBrightness, setCurrentBrightness] = useState(100);
     const [isEditingExistingVariant, setIsEditingExistingVariant] = useState(false);
     const [defaultColorId, setDefaultColorId] = useState(null);
 
@@ -97,7 +106,16 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                 image: product.image || '',
                 inStock: product.inStock ?? true,
                 featured: product.featured ?? false,
+                featured: product.featured ?? false,
                 weight: product.weight || 1.0,
+                // New fields mapping
+                productCode: product.productCode || '',
+                barcode: product.barcode || '',
+                piecesInPackage: product.piecesInPackage || '',
+                packageType: product.packageType || 'BOX',
+                volume: product.volume || '',
+                packageDimensions: product.packageDimensions || { width: 0, height: 0, depth: 0 },
+                dimensions: product.dimensions || { width: 0, height: 0, depth: 0 },
             });
             if (product.sizeVariants) {
                 setSizeVariants(product.sizeVariants);
@@ -149,6 +167,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             setSelectedColorVariant(null);
             setCurrentHue(0);
             setCurrentSaturation(100);
+            setCurrentBrightness(100);
             setIsEditingExistingVariant(false);
             return;
         }
@@ -160,6 +179,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             setSelectedColorVariant(existingVariant);
             setCurrentHue(existingVariant.hue);
             setCurrentSaturation(existingVariant.saturation);
+            setCurrentBrightness(existingVariant.brightness || 100);
             setIsEditingExistingVariant(true);
         } else {
             // Create a new variant with default values
@@ -174,11 +194,13 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                 colorId,
                 colorName: colorInfo?.name || colorId,
                 hue: fabricaPreset?.hue || 0,
-                saturation: 100,
+                saturation: fabricaPreset?.saturation !== undefined ? fabricaPreset.saturation : 100,
+                brightness: fabricaPreset?.brightness !== undefined ? fabricaPreset.brightness : 100,
             };
             setSelectedColorVariant(newVariant);
             setCurrentHue(newVariant.hue);
             setCurrentSaturation(newVariant.saturation);
+            setCurrentBrightness(newVariant.brightness);
             setIsEditingExistingVariant(false);
         }
     };
@@ -195,6 +217,8 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
     // Apply fabrica preset to current selection
     const handleFabricaColorSelect = (fabricaColor) => {
         setCurrentHue(fabricaColor.hue);
+        if (fabricaColor.saturation !== undefined) setCurrentSaturation(fabricaColor.saturation);
+        if (fabricaColor.brightness !== undefined) setCurrentBrightness(fabricaColor.brightness);
     };
 
     // Add current color variant to the list
@@ -205,6 +229,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             ...selectedColorVariant,
             hue: currentHue,
             saturation: currentSaturation,
+            brightness: currentBrightness,
         };
 
         // Check if variant already exists, update it
@@ -231,6 +256,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
             setSelectedColorVariant(null);
             setCurrentHue(0);
             setCurrentSaturation(100);
+            setCurrentBrightness(100);
             setIsEditingExistingVariant(false);
         }
     };
@@ -239,6 +265,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
     const handlePreviewColorVariant = (variant) => {
         setCurrentHue(variant.hue);
         setCurrentSaturation(variant.saturation);
+        setCurrentBrightness(variant.brightness || 100);
     };
 
     const handleAddSizeVariant = () => {
@@ -271,19 +298,11 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
     };
 
     // Handle visual scale change - updates selected variant dimensions
+    // Handle visual scale change - updates ONLY visual scale, not dimensions
     const handleScaleChange = (newScale) => {
         setImageScale(newScale);
-        const scaleFactor = newScale / 100;
-        const newWidth = Math.round(baseDimensions.width * scaleFactor);
-        const newHeight = Math.round(baseDimensions.height * scaleFactor);
-
-        // Update the selected size variant with new dimensions
-        setSizeVariants(prev => prev.map(v =>
-            v.id === selectedSize ? {
-                ...v,
-                dimensions: { width: newWidth, height: newHeight }
-            } : v
-        ));
+        // User requested that this scale customization does NOT affect the actual product content/dimensions.
+        // It's purely for visual scaling in the preview.
     };
 
     // When selecting a size variant, update base dimensions and scale
@@ -308,7 +327,8 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
         const productData = {
             ...formData,
             id: product?.id || Date.now(),
-            dimensions: selectedVariant?.dimensions || { width: 100, height: 100, depth: 50 },
+            dimensions: formData.dimensions || { width: 100, height: 100, depth: 0 },
+            packageDimensions: formData.packageDimensions || { width: 0, height: 0, depth: 0 },
             sizeVariants,
             defaultSize: selectedSize,
             imageScale: imageScale,
@@ -327,7 +347,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
     };
 
     const imageStyle = {
-        filter: `hue-rotate(${currentHue}deg) saturate(${currentSaturation / 100})`,
+        filter: `hue-rotate(${currentHue}deg) saturate(${currentSaturation / 100}) brightness(${currentBrightness / 100})`,
         transform: activeTab === 'size' ? `scale(${imageScale / 100})` : 'scale(1)',
         transition: 'transform 0.2s ease',
     };
@@ -348,19 +368,14 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                 alt="Product preview"
                                 style={imageStyle}
                             />
-                            <button className="reset-btn" onClick={() => { setCurrentHue(0); setCurrentSaturation(100); }}>
+                            <button className="reset-btn" onClick={() => { setCurrentHue(0); setCurrentSaturation(100); setCurrentBrightness(100); }}>
                                 ↺
                             </button>
                         </div>
                         <div className="preview-info">
                             <h4>{formData.nameTr || formData.name || 'Ürün Adı'}</h4>
                             <p className="sku">{formData.sku || 'SKU-000'}</p>
-                            {sizeVariants.find(v => v.id === selectedSize) && (
-                                <p className="dimensions">
-                                    {sizeVariants.find(v => v.id === selectedSize)?.dimensions.width} × {' '}
-                                    {sizeVariants.find(v => v.id === selectedSize)?.dimensions.height} mm
-                                </p>
-                            )}
+
                         </div>
                     </div>
 
@@ -574,68 +589,14 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                             </div>
                                         </div>
 
-                                        <div className="current-dimensions">
-                                            <div className="dim-display">
-                                                <span className="dim-label">Genişlik</span>
-                                                <span className="dim-value">{sizeVariants.find(v => v.id === selectedSize)?.dimensions.width || 0} mm</span>
-                                            </div>
-                                            <span className="dim-separator">×</span>
-                                            <div className="dim-display">
-                                                <span className="dim-label">Yükseklik</span>
-                                                <span className="dim-value">{sizeVariants.find(v => v.id === selectedSize)?.dimensions.height || 0} mm</span>
-                                            </div>
-                                        </div>
+
                                     </div>
 
                                     {/* Preset Sizes Section */}
-                                    <div className="section">
-                                        <h5>
-                                            <span className="section-indicator"></span>
-                                            HAZIR BOYUTLAR
-                                        </h5>
-                                        <div className="preset-sizes">
-                                            {sizeVariants.map(variant => (
-                                                <button
-                                                    key={variant.id}
-                                                    className={`preset-size-btn ${selectedSize === variant.id ? 'active' : ''}`}
-                                                    onClick={() => handleSizeSelect(variant.id)}
-                                                >
-                                                    <span className="preset-label">{variant.label}</span>
-                                                    <span className="preset-dims">{variant.dimensions.width}×{variant.dimensions.height}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+
 
                                     {/* Custom Size Section */}
-                                    <div className="section">
-                                        <h5>
-                                            <span className="section-indicator"></span>
-                                            MANUEL GİRİŞ
-                                        </h5>
-                                        <div className="manual-dimensions">
-                                            <div className="dimension-input-group">
-                                                <label>Genişlik (mm)</label>
-                                                <input
-                                                    type="number"
-                                                    value={sizeVariants.find(v => v.id === selectedSize)?.dimensions.width || 0}
-                                                    onChange={e => handleDimensionChange(selectedSize, 'width', e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="dimension-input-group">
-                                                <label>Yükseklik (mm)</label>
-                                                <input
-                                                    type="number"
-                                                    value={sizeVariants.find(v => v.id === selectedSize)?.dimensions.height || 0}
-                                                    onChange={e => handleDimensionChange(selectedSize, 'height', e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-                                        <button className="add-variant-btn" onClick={handleAddSizeVariant}>
-                                            <Plus size={16} />
-                                            Yeni Boyut Varyantı Ekle
-                                        </button>
-                                    </div>
+
                                 </div>
                             )}
 
@@ -703,6 +664,122 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                                 onChange={e => handleInputChange('weight', parseFloat(e.target.value))}
                                             />
                                         </div>
+                                        <div className="form-group">
+                                            <label>Hacim (LT)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={formData.volume}
+                                                onChange={e => handleInputChange('volume', parseFloat(e.target.value))}
+                                                placeholder="0.60"
+                                            />
+                                        </div>
+
+                                        <div className="form-group full-width">
+                                            <label>Ürün Boyutları (mm) - Genişlik x Yükseklik x Derinlik</label>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Genişlik"
+                                                    value={formData.dimensions?.width || ''}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        dimensions: { ...prev.dimensions, width: parseFloat(e.target.value) }
+                                                    }))}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Yükseklik"
+                                                    value={formData.dimensions?.height || ''}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        dimensions: { ...prev.dimensions, height: parseFloat(e.target.value) }
+                                                    }))}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Derinlik"
+                                                    value={formData.dimensions?.depth || ''}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        dimensions: { ...prev.dimensions, depth: parseFloat(e.target.value) }
+                                                    }))}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Ürün Kodu (Seçenek)</label>
+                                            <input
+                                                type="text"
+                                                value={formData.productCode}
+                                                onChange={e => handleInputChange('productCode', e.target.value)}
+                                                placeholder="Örn: EXTRA-123"
+                                            />
+                                        </div>
+
+
+                                        {/* Packaging Information Group */}
+                                        <div className="form-group full-width" style={{ marginTop: '10px', marginBottom: '5px' }}>
+                                            <h5 style={{ fontSize: '14px', fontWeight: '600', color: '#444', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>
+                                                Paketleme Bilgileri
+                                            </h5>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Paket İçi Adet (PCS)</label>
+                                            <input
+                                                type="number"
+                                                value={formData.piecesInPackage}
+                                                onChange={e => handleInputChange('piecesInPackage', parseInt(e.target.value))}
+                                                placeholder="240"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Paket Tipi</label>
+                                            <select
+                                                value={formData.packageType}
+                                                onChange={e => handleInputChange('packageType', e.target.value)}
+                                            >
+                                                <option value="BOX">Koli (BOX)</option>
+                                                <option value="PP_BAG">Poşet (PP BAG)</option>
+                                                <option value="PALLET">Palet</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="form-group full-width">
+                                            <label>Paket Boyutları (cm) - Genişlik x Yükseklik x Derinlik</label>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Genişlik"
+                                                    value={formData.packageDimensions?.width || ''}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        packageDimensions: { ...prev.packageDimensions, width: parseFloat(e.target.value) }
+                                                    }))}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Yükseklik"
+                                                    value={formData.packageDimensions?.height || ''}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        packageDimensions: { ...prev.packageDimensions, height: parseFloat(e.target.value) }
+                                                    }))}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="Derinlik"
+                                                    value={formData.packageDimensions?.depth || ''}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        packageDimensions: { ...prev.packageDimensions, depth: parseFloat(e.target.value) }
+                                                    }))}
+                                                />
+                                            </div>
+                                        </div>
+
                                         <div className="form-group full-width">
                                             <label>Görsel URL veya Yükle</label>
                                             <div className="image-input-group">

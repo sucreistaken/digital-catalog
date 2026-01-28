@@ -1,47 +1,125 @@
-import React, { useState } from 'react';
-import { Save, Upload, Globe, Phone, Mail, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Upload, Globe, Phone, Mail, MapPin, Loader2, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { settingsApi } from '../../utils/api';
 import '../Dashboard.css';
 
 const Settings = () => {
     const { t } = useLanguage();
     const [settings, setSettings] = useState({
-        companyName: 'FreeGarden',
-        email: 'info@freegarden.com',
-        phone: '+90 500 123 45 67',
-        whatsapp: '+90 500 123 45 67',
-        address: 'Adana, Turkey',
-        website: 'www.freegarden.com',
+        companyName: '',
+        email: '',
+        phone: '',
+        whatsapp: '',
+        address: '',
+        website: '',
         defaultLanguage: 'en',
+        instagram: '',
+        facebook: '',
+        linkedin: ''
     });
+    const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    // Load settings on mount
+    useEffect(() => {
+        loadSettings();
+    }, []);
+
+    const loadSettings = async () => {
+        try {
+            setLoading(true);
+            const data = await settingsApi.getAll();
+            setSettings(prev => ({ ...prev, ...data }));
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const handleSave = async () => {
-        setIsSaving(true);
-        await new Promise(r => setTimeout(r, 1000));
-        setIsSaving(false);
-        alert('Settings saved successfully!');
+        try {
+            setIsSaving(true);
+            await settingsApi.update(settings);
+            showToast('Ayarlar kaydedildi');
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            setIsSaving(false);
+        }
     };
+
+    const handleSeedDefaults = async () => {
+        if (!window.confirm('Varsayılan ayarları yüklemek istediğinize emin misiniz?')) return;
+
+        try {
+            await settingsApi.seed();
+            showToast('Varsayılan ayarlar yüklendi');
+            loadSettings();
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="admin-page">
+                <div className="loading-state">
+                    <Loader2 size={32} className="spin" />
+                    <p>Yükleniyor...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="admin-page">
+            {/* Toast */}
+            {toast && (
+                <div className={`toast toast-${toast.type}`}>
+                    {toast.message}
+                </div>
+            )}
+
             <header className="admin-header">
                 <div>
                     <h1 className="text-h2">{t('settings')}</h1>
-                    <p className="text-body">Configure your catalog settings</p>
+                    <p className="text-body">Katalog ayarlarını yapılandırın</p>
                 </div>
-                <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
-                    <Save size={18} />
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                </button>
+                <div className="header-actions">
+                    <button className="btn btn-secondary" onClick={handleSeedDefaults}>
+                        <RefreshCw size={18} />
+                        Varsayılanlar
+                    </button>
+                    <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
+                        {isSaving ? (
+                            <>
+                                <Loader2 size={18} className="spin" />
+                                Kaydediliyor...
+                            </>
+                        ) : (
+                            <>
+                                <Save size={18} />
+                                Kaydet
+                            </>
+                        )}
+                    </button>
+                </div>
             </header>
 
             <div className="settings-grid">
                 {/* Company Info */}
                 <div className="settings-section card">
-                    <h3>Company Information</h3>
+                    <h3>Şirket Bilgileri</h3>
                     <div className="form-group">
-                        <label>Company Name</label>
+                        <label>Şirket Adı</label>
                         <input
                             type="text"
                             value={settings.companyName}
@@ -56,7 +134,7 @@ const Settings = () => {
                                 <span className="brand-garden">garden</span>
                             </div>
                             <button className="btn btn-secondary btn-sm">
-                                <Upload size={14} /> Upload New
+                                <Upload size={14} /> Yeni Yükle
                             </button>
                         </div>
                     </div>
@@ -64,7 +142,7 @@ const Settings = () => {
 
                 {/* Contact Info */}
                 <div className="settings-section card">
-                    <h3>Contact Information</h3>
+                    <h3>İletişim Bilgileri</h3>
                     <div className="form-group">
                         <label><Mail size={16} /> Email</label>
                         <input
@@ -74,7 +152,7 @@ const Settings = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label><Phone size={16} /> Phone</label>
+                        <label><Phone size={16} /> Telefon</label>
                         <input
                             type="tel"
                             value={settings.phone}
@@ -90,7 +168,7 @@ const Settings = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label><MapPin size={16} /> Address</label>
+                        <label><MapPin size={16} /> Adres</label>
                         <input
                             type="text"
                             value={settings.address}
@@ -101,7 +179,7 @@ const Settings = () => {
 
                 {/* Website Settings */}
                 <div className="settings-section card">
-                    <h3>Website Settings</h3>
+                    <h3>Web Sitesi Ayarları</h3>
                     <div className="form-group">
                         <label><Globe size={16} /> Website URL</label>
                         <input
@@ -111,7 +189,7 @@ const Settings = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Default Language</label>
+                        <label>Varsayılan Dil</label>
                         <select
                             value={settings.defaultLanguage}
                             onChange={e => setSettings({ ...settings, defaultLanguage: e.target.value })}
@@ -122,6 +200,38 @@ const Settings = () => {
                             <option value="de">Deutsch</option>
                             <option value="zh">中文</option>
                         </select>
+                    </div>
+                </div>
+
+                {/* Social Media */}
+                <div className="settings-section card">
+                    <h3>Sosyal Medya</h3>
+                    <div className="form-group">
+                        <label>📸 Instagram</label>
+                        <input
+                            type="text"
+                            value={settings.instagram}
+                            onChange={e => setSettings({ ...settings, instagram: e.target.value })}
+                            placeholder="https://instagram.com/..."
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>📘 Facebook</label>
+                        <input
+                            type="text"
+                            value={settings.facebook}
+                            onChange={e => setSettings({ ...settings, facebook: e.target.value })}
+                            placeholder="https://facebook.com/..."
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>💼 LinkedIn</label>
+                        <input
+                            type="text"
+                            value={settings.linkedin}
+                            onChange={e => setSettings({ ...settings, linkedin: e.target.value })}
+                            placeholder="https://linkedin.com/company/..."
+                        />
                     </div>
                 </div>
             </div>
