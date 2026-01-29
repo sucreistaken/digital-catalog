@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2, GripVertical, X, FileText, CheckCircle, FileSpreadsheet, Copy, Check } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2, GripVertical, X, FileText, CheckCircle, FileSpreadsheet, Copy, Check, Image } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { products as defaultProducts, materials, colors } from '../../data/products';
 import { generateProductCatalog } from '../../utils/pdfGenerator';
 import { productsApi, categoriesApi } from '../../utils/api';
 import ProductEditModal from '../../components/ProductEditModal';
+import ImageGalleryAssigner from '../../components/ImageGalleryAssigner';
 import '../Dashboard.css';
 
 const Products = () => {
@@ -24,6 +25,7 @@ const Products = () => {
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showGalleryAssigner, setShowGalleryAssigner] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
 
     // Drag & Drop state
@@ -299,6 +301,10 @@ const Products = () => {
                         <Download size={18} />
                         Dışa Aktar
                     </button>
+                    <button className="btn btn-secondary" onClick={() => setShowGalleryAssigner(true)}>
+                        <Image size={18} />
+                        Toplu Resim
+                    </button>
                     <button className="btn btn-primary" onClick={handleAddProduct}>
                         <Plus size={18} />
                         Ürün Ekle
@@ -542,6 +548,15 @@ const Products = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Image Gallery Assigner Modal */}
+            {showGalleryAssigner && (
+                <ImageGalleryAssigner
+                    products={products}
+                    onClose={() => setShowGalleryAssigner(false)}
+                    onUpdate={loadProducts}
+                />
             )}
         </div>
     );
