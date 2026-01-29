@@ -13,6 +13,10 @@ if (!fs.existsSync(uploadDir)) {
 // Configure storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
+        // Double-check directory exists before each upload
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
@@ -25,8 +29,8 @@ const storage = multer.diskStorage({
 // File filter
 const fileFilter = (req, file, cb) => {
     // Accept images only
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
-        return cb(new Error('Only image files are allowed!'), false);
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        return cb(new Error('Sadece resim dosyaları yüklenebilir! (jpg, jpeg, png, gif, webp)'), false);
     }
     cb(null, true);
 };
@@ -34,30 +38,46 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB max
+        fileSize: 10 * 1024 * 1024 // 10MB max (increased from 5MB)
     },
     fileFilter: fileFilter
 });
 
 // POST /api/upload
-router.post('/', upload.single('image'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'Please upload a file' });
+router.post('/', (req, res) => {
+    upload.single('image')(req, res, function (err) {
+        // Handle Multer errors
+        if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ error: 'Dosya boyutu çok büyük! Maksimum 10MB yükleyebilirsiniz.' });
+            }
+            return res.status(400).json({ error: `Yükleme hatası: ${err.message}` });
+        } else if (err) {
+            // Other errors (like file type)
+            return res.status(400).json({ error: err.message });
         }
 
-        // Return the file URL
-        // In Docker/Production, this should be the full URL or relative path handled by frontend
-        const fileUrl = `/uploads/${req.file.filename}`;
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'Lütfen bir dosya seçin' });
+            }
 
-        res.status(201).json({
-            message: 'File uploaded successfully',
-            url: fileUrl,
-            filename: req.file.filename
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+            // Return the file URL
+            const fileUrl = `/uploads/${req.file.filename}`;
+
+            console.log(`✅ Resim yüklendi: ${req.file.filename}`);
+
+            res.status(201).json({
+                message: 'Dosya başarıyla yüklendi',
+                url: fileUrl,
+                filename: req.file.filename
+            });
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+            res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+        }
+    });
 });
 
 module.exports = router;
+

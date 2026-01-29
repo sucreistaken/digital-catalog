@@ -98,7 +98,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                                 onClick={() => copyToClipboard(product.sku || product._id)}
                                 title="Tıkla ve kopyala"
                             >
-                                <span>{product.sku || 'SKU-000'}</span>
+                                <span>{product.sku || 'Barkod'}</span>
                                 {copied ? <Check size={14} /> : <Copy size={14} />}
                             </button>
                             <h2>{getProductName(product, language) || 'Yeni Ürün'}</h2>
@@ -120,9 +120,18 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                                 <Ruler size={18} />
                                 <span className="spec-label">{t('dimensions')}</span>
                                 <span className="spec-value">
-                                    {product.dimensions?.width || 0} × {product.dimensions?.height || 0} {product.dimensions?.depth > 0 ? `× ${product.dimensions.depth}` : ''} cm
+                                    {product.dimensions?.width || 0} × {product.dimensions?.height || 0} {product.dimensions?.depth > 0 ? `× ${product.dimensions.depth}` : ''} mm
                                 </span>
                             </div>
+                            {(product.packageDimensions?.width > 0 || product.packageDimensions?.height > 0 || product.packageDimensions?.depth > 0) && (
+                                <div className="spec-card">
+                                    <Box size={18} />
+                                    <span className="spec-label">{t('packageDimensions')}</span>
+                                    <span className="spec-value">
+                                        {product.packageDimensions?.width || 0} × {product.packageDimensions?.height || 0} {product.packageDimensions?.depth > 0 ? `× ${product.packageDimensions.depth}` : ''} cm
+                                    </span>
+                                </div>
+                            )}
                             <div className="spec-card">
                                 <Weight size={18} />
                                 <span className="spec-label">{t('weight')}</span>
@@ -278,12 +287,12 @@ const ProductCard = ({ product, onClick, language, t }) => {
                 {!product.inStock && <div className="out-stock-overlay">{t('outOfStock')}</div>}
             </div>
             <div className="product-info">
-                <span className="product-sku">{product.sku || 'SKU-000'}</span>
+                <span className="product-sku">{product.sku || 'Barkod'}</span>
                 <h3>{getProductName(product, language) || 'Yeni Ürün'}</h3>
                 <div className="product-specs-mini">
-                    <span>{product.dimensions?.width || 0}×{product.dimensions?.height || 0}{product.dimensions?.depth > 0 ? `×${product.dimensions.depth}` : ''} cm</span>
+                    <span>{product.dimensions?.width || 0}×{product.dimensions?.height || 0}{product.dimensions?.depth > 0 ? `×${product.dimensions.depth}` : ''} mm</span>
                     <span>•</span>
-                    <span>{product.weight || 0} kg</span>
+                    <span>{product.volume || 0} Lt</span>
                 </div>
                 <div className="product-colors-mini">
                     {product.colors && product.colors.slice(0, 4).map(colorId => {

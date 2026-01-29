@@ -10,23 +10,69 @@ export const categories = [
 ];
 
 export const colors = [
+    // Temel Renkler
     { id: 'white', name: 'White', hex: '#FFFFFF' },
     { id: 'black', name: 'Black', hex: '#1D1D1F' },
-    { id: 'green', name: 'Green', hex: '#34C759' },
-    { id: 'blue', name: 'Blue', hex: '#007AFF' },
-    { id: 'navy', name: 'Navy', hex: '#000080' },
-    { id: 'red', name: 'Red', hex: '#FF3B30' },
-    { id: 'burgundy', name: 'Burgundy', hex: '#800020' },
-    { id: 'yellow', name: 'Yellow', hex: '#FFCC00' },
-    { id: 'orange', name: 'Orange', hex: '#FF9500' },
     { id: 'gray', name: 'Gray', hex: '#8E8E93' },
     { id: 'anthracite', name: 'Anthracite', hex: '#36454F' },
+    { id: 'silver', name: 'Silver', hex: '#C0C0C0' },
+
+    // Yeşil Tonları
+    { id: 'green', name: 'Green', hex: '#34C759' },
+    { id: 'dark-green', name: 'Dark Green', hex: '#228B22' },
+    { id: 'lime', name: 'Lime', hex: '#32CD32' },
+    { id: 'mint', name: 'Mint', hex: '#98FF98' },
+    { id: 'olive', name: 'Olive', hex: '#808000' },
+    { id: 'teal', name: 'Teal', hex: '#008080' },
+
+    // Mavi Tonları
+    { id: 'blue', name: 'Blue', hex: '#007AFF' },
+    { id: 'navy', name: 'Navy', hex: '#000080' },
+    { id: 'light-blue', name: 'Light Blue', hex: '#87CEEB' },
+    { id: 'turquoise', name: 'Turquoise', hex: '#5AC8FA' },
+    { id: 'cyan', name: 'Cyan', hex: '#00FFFF' },
+    { id: 'royal-blue', name: 'Royal Blue', hex: '#4169E1' },
+    { id: 'cobalt', name: 'Cobalt', hex: '#0047AB' },
+
+    // Kırmızı/Pembe Tonları
+    { id: 'red', name: 'Red', hex: '#FF3B30' },
+    { id: 'burgundy', name: 'Burgundy', hex: '#800020' },
+    { id: 'pink', name: 'Pink', hex: '#FF2D55' },
+    { id: 'hot-pink', name: 'Hot Pink', hex: '#FF69B4' },
+    { id: 'coral', name: 'Coral', hex: '#FF7F50' },
+    { id: 'salmon', name: 'Salmon', hex: '#FA8072' },
+    { id: 'fuchsia', name: 'Fuchsia', hex: '#FF00FF' },
+
+    // Sarı/Turuncu Tonları
+    { id: 'yellow', name: 'Yellow', hex: '#FFCC00' },
+    { id: 'orange', name: 'Orange', hex: '#FF9500' },
+    { id: 'gold', name: 'Gold', hex: '#FFD700' },
+    { id: 'amber', name: 'Amber', hex: '#FFBF00' },
+    { id: 'peach', name: 'Peach', hex: '#FFCBA4' },
+    { id: 'tangerine', name: 'Tangerine', hex: '#FF9966' },
+
+    // Mor/Eflatun Tonları
+    { id: 'purple', name: 'Purple', hex: '#AF52DE' },
+    { id: 'violet', name: 'Violet', hex: '#8B00FF' },
+    { id: 'lavender', name: 'Lavender', hex: '#E6E6FA' },
+    { id: 'lilac', name: 'Lilac', hex: '#C8A2C8' },
+    { id: 'plum', name: 'Plum', hex: '#8E4585' },
+    { id: 'orchid', name: 'Orchid', hex: '#DA70D6' },
+
+    // Kahve/Toprak Tonları
     { id: 'brown', name: 'Brown', hex: '#A2845E' },
     { id: 'beige', name: 'Beige', hex: '#E5D0B1' },
     { id: 'cream', name: 'Cream', hex: '#FFFDD0' },
-    { id: 'purple', name: 'Purple', hex: '#AF52DE' },
-    { id: 'pink', name: 'Pink', hex: '#FF2D55' },
-    { id: 'turquoise', name: 'Turquoise', hex: '#5AC8FA' }
+    { id: 'tan', name: 'Tan', hex: '#D2B48C' },
+    { id: 'chocolate', name: 'Chocolate', hex: '#7B3F00' },
+    { id: 'terracotta', name: 'Terracotta', hex: '#E2725B' },
+    { id: 'sand', name: 'Sand', hex: '#C2B280' },
+    { id: 'champagne', name: 'Champagne', hex: '#F7E7CE' },
+    { id: 'ivory', name: 'Ivory', hex: '#FFFFF0' },
+
+    // Transparan
+    { id: 'transparent', name: 'Transparent', hex: '#FFFFFF80' },
+    { id: 'smoke', name: 'Smoke', hex: '#708090' }
 ];
 
 export const fabricaColors = [

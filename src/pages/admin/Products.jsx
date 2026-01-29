@@ -312,7 +312,7 @@ const Products = () => {
                     <Search size={18} />
                     <input
                         type="text"
-                        placeholder="Ad veya SKU ile ara..."
+                        placeholder="Ad veya barkod ile ara..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
@@ -355,7 +355,7 @@ const Products = () => {
                         <tr>
                             {isDragEnabled && <th style={{ width: '40px' }}></th>}
                             <th>Ürün</th>
-                            <th>SKU</th>
+                            <th>Barkod</th>
                             <th>Kategori</th>
                             <th>Boyutlar</th>
                             <th>Ağırlık</th>

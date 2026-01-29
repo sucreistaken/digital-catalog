@@ -240,7 +240,7 @@ export const generateProductCatalog = async (products, categories) => {
 
             doc.setFontSize(8);
             doc.setTextColor(150);
-            doc.text(`Sayfa ${i} / ${pageCount}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+            doc.text(`Sayfa ${i} / ${totalPages}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
             doc.text('www.freegarden.com', pageWidth / 2, pageHeight - 10, { align: 'center' }); // Updated domain
         }
         // Save PDF

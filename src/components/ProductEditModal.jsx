@@ -374,7 +374,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                         </div>
                         <div className="preview-info">
                             <h4>{formData.nameTr || formData.name || 'Ürün Adı'}</h4>
-                            <p className="sku">{formData.sku || 'SKU-000'}</p>
+                            <p className="sku">{formData.sku || 'Barkod'}</p>
 
                         </div>
                     </div>
@@ -623,12 +623,12 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                             />
                                         </div>
                                         <div className="form-group">
-                                            <label>SKU</label>
+                                            <label>Barkod</label>
                                             <input
                                                 type="text"
                                                 value={formData.sku}
                                                 onChange={e => handleInputChange('sku', e.target.value)}
-                                                placeholder="FG-XX-000"
+                                                placeholder="Ürün barkodu..."
                                             />
                                         </div>
                                         <div className="form-group">
