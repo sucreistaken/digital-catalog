@@ -331,7 +331,7 @@ const ImageGalleryAssigner = ({ products, onClose, onUpdate }) => {
                                 galleryImages.map((img, index) => (
                                     <LazyImage
                                         key={img.filename || index}
-                                        src={img.url}
+                                        src={img.thumbUrl || img.url}
                                         alt=""
                                         className={`gallery-image ${!selectedProduct ? 'disabled' : ''} ${loading ? 'loading' : ''}`}
                                         onClick={() => !loading && handleAssignImage(img.url)}

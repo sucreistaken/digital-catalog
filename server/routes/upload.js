@@ -3,6 +3,8 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
+const Product = require('../models/Product');
 
 // Ensure uploads directory exists
 const uploadDir = path.join(__dirname, '../uploads');
@@ -10,21 +12,8 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // Double-check directory exists before each upload
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename: timestamp-random.ext
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
+// Configure storage - use memory for processing with sharp
+const storage = multer.memoryStorage();
 
 // File filter
 const fileFilter = (req, file, cb) => {
@@ -38,17 +27,53 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB max
+        fileSize: 100 * 1024 * 1024 // 100MB max
     },
     fileFilter: fileFilter
 });
 
+// Ensure thumbnails directory exists
+const thumbDir = path.join(uploadDir, 'thumbs');
+if (!fs.existsSync(thumbDir)) {
+    fs.mkdirSync(thumbDir, { recursive: true });
+}
+
+// Save original and create thumbnail
+async function saveWithThumbnail(buffer, originalName) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(originalName).toLowerCase() || '.jpg';
+    const filename = uniqueSuffix + ext;
+    const thumbFilename = uniqueSuffix + '_thumb.webp';
+
+    const originalPath = path.join(uploadDir, filename);
+    const thumbPath = path.join(thumbDir, thumbFilename);
+
+    // Save original file as-is (full quality)
+    fs.writeFileSync(originalPath, buffer);
+
+    // Create small thumbnail for gallery (fast loading)
+    await sharp(buffer)
+        .resize(300, 300, {
+            fit: 'inside',
+            withoutEnlargement: true
+        })
+        .webp({ quality: 70 })
+        .toFile(thumbPath);
+
+    return {
+        filename,
+        thumbFilename,
+        url: `/uploads/${filename}`,
+        thumbUrl: `/uploads/thumbs/${thumbFilename}`
+    };
+}
+
 // POST /api/upload - Single image upload
 router.post('/', (req, res) => {
-    upload.single('image')(req, res, function (err) {
+    upload.single('image')(req, res, async function (err) {
         if (err instanceof multer.MulterError) {
             if (err.code === 'LIMIT_FILE_SIZE') {
-                return res.status(400).json({ error: 'Dosya boyutu çok büyük! Maksimum 10MB yükleyebilirsiniz.' });
+                return res.status(400).json({ error: 'Dosya boyutu çok büyük! Maksimum 100MB yükleyebilirsiniz.' });
             }
             return res.status(400).json({ error: `Yükleme hatası: ${err.message}` });
         } else if (err) {
@@ -60,13 +85,16 @@ router.post('/', (req, res) => {
                 return res.status(400).json({ error: 'Lütfen bir dosya seçin' });
             }
 
-            const fileUrl = `/uploads/${req.file.filename}`;
-            console.log(`✅ Resim yüklendi: ${req.file.filename}`);
+            // Save original + create thumbnail
+            const result = await saveWithThumbnail(req.file.buffer, req.file.originalname);
+
+            console.log(`✅ Resim yüklendi: ${result.filename}`);
 
             res.status(201).json({
                 message: 'Dosya başarıyla yüklendi',
-                url: fileUrl,
-                filename: req.file.filename
+                url: result.url,
+                thumbUrl: result.thumbUrl,
+                filename: result.filename
             });
         } catch (error) {
             console.error('❌ Upload error:', error);
@@ -75,12 +103,12 @@ router.post('/', (req, res) => {
     });
 });
 
-// POST /api/upload/bulk - Multiple image upload
+// POST /api/upload/bulk - Multiple image upload  
 router.post('/bulk', (req, res) => {
-    upload.array('images', 50)(req, res, function (err) {
+    upload.array('images', 50)(req, res, async function (err) {
         if (err instanceof multer.MulterError) {
             if (err.code === 'LIMIT_FILE_SIZE') {
-                return res.status(400).json({ error: 'Dosya boyutu çok büyük! Maksimum 10MB yükleyebilirsiniz.' });
+                return res.status(400).json({ error: 'Dosya boyutu çok büyük! Maksimum 100MB yükleyebilirsiniz.' });
             }
             return res.status(400).json({ error: `Yükleme hatası: ${err.message}` });
         } else if (err) {
@@ -92,12 +120,18 @@ router.post('/bulk', (req, res) => {
                 return res.status(400).json({ error: 'Lütfen en az bir dosya seçin' });
             }
 
-            const uploadedFiles = req.files.map(file => ({
-                url: `/uploads/${file.filename}`,
-                filename: file.filename,
-                originalName: file.originalname,
-                size: file.size
-            }));
+            // Process all images in parallel - save original + thumbnail
+            const uploadPromises = req.files.map(async (file) => {
+                const result = await saveWithThumbnail(file.buffer, file.originalname);
+                return {
+                    url: result.url,
+                    thumbUrl: result.thumbUrl,
+                    filename: result.filename,
+                    originalName: file.originalname
+                };
+            });
+
+            const uploadedFiles = await Promise.all(uploadPromises);
 
             console.log(`✅ ${uploadedFiles.length} resim yüklendi`);
 
@@ -119,13 +153,28 @@ router.get('/gallery', (req, res) => {
             return res.json({ files: [] });
         }
 
+        // Get original files (not thumbs)
         const files = fs.readdirSync(uploadDir)
-            .filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file))
+            .filter(file => {
+                // Skip directories and thumb files
+                const filePath = path.join(uploadDir, file);
+                return fs.statSync(filePath).isFile() &&
+                    /\.(jpg|jpeg|png|gif|webp)$/i.test(file) &&
+                    !file.includes('_thumb');
+            })
             .map(filename => {
                 const filePath = path.join(uploadDir, filename);
                 const stats = fs.statSync(filePath);
+
+                // Find corresponding thumbnail
+                const baseName = path.parse(filename).name;
+                const thumbFilename = baseName + '_thumb.webp';
+                const thumbPath = path.join(thumbDir, thumbFilename);
+                const hasThumb = fs.existsSync(thumbPath);
+
                 return {
                     url: `/uploads/${filename}`,
+                    thumbUrl: hasThumb ? `/uploads/thumbs/${thumbFilename}` : `/uploads/${filename}`,
                     filename: filename,
                     size: stats.size,
                     uploadedAt: stats.mtime
@@ -140,28 +189,68 @@ router.get('/gallery', (req, res) => {
     }
 });
 
-// DELETE /api/upload/all - Delete ALL images (Must be before /:filename)
-router.delete('/all', (req, res) => {
+// DELETE /api/upload/all - Delete UNUSED images only (Must be before /:filename)
+router.delete('/all', async (req, res) => {
     try {
         if (!fs.existsSync(uploadDir)) {
             return res.json({ message: 'Galeri zaten boş', count: 0 });
         }
 
-        const files = fs.readdirSync(uploadDir)
-            .filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file));
+        // Get all product images from database
+        const products = await Product.find({}, 'image');
+        const usedImages = new Set();
+
+        products.forEach(product => {
+            if (product.image) {
+                // Extract filename from URL (e.g., /uploads/123456.jpg -> 123456.jpg)
+                const filename = product.image.split('/').pop();
+                usedImages.add(filename);
+            }
+        });
+
+        console.log(`📦 Ürünlerde kullanılan ${usedImages.size} resim korunacak`);
+
+        // Get all original files (not in thumbs folder)
+        const allFiles = fs.readdirSync(uploadDir)
+            .filter(file => {
+                const filePath = path.join(uploadDir, file);
+                return fs.statSync(filePath).isFile() && /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
+            });
 
         let deletedCount = 0;
-        for (const file of files) {
+        let skippedCount = 0;
+
+        for (const file of allFiles) {
+            if (usedImages.has(file)) {
+                // This image is used by a product, skip it
+                skippedCount++;
+                continue;
+            }
+
             try {
+                // Delete original file
                 fs.unlinkSync(path.join(uploadDir, file));
+
+                // Also delete corresponding thumbnail if exists
+                const baseName = path.parse(file).name;
+                const thumbFilename = baseName + '_thumb.webp';
+                const thumbPath = path.join(thumbDir, thumbFilename);
+                if (fs.existsSync(thumbPath)) {
+                    fs.unlinkSync(thumbPath);
+                }
+
                 deletedCount++;
             } catch (e) {
                 console.error(`Silinemedi: ${file}`, e);
             }
         }
 
-        console.log(`🗑️ ${deletedCount} resim silindi`);
-        res.json({ message: `${deletedCount} resim silindi`, count: deletedCount });
+        console.log(`🗑️ ${deletedCount} kullanılmayan resim silindi, ${skippedCount} ürün resmi korundu`);
+        res.json({
+            message: `${deletedCount} kullanılmayan resim silindi`,
+            count: deletedCount,
+            kept: skippedCount
+        });
     } catch (error) {
         console.error('❌ Delete all error:', error);
         res.status(500).json({ error: 'Silme hatası: ' + error.message });
