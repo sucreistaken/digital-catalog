@@ -102,6 +102,48 @@ export const productsApi = {
         });
         if (!res.ok) throw new Error('Sıralama güncellenemedi');
         return res.json();
+    },
+
+    // Reorder products within a category (drag & drop)
+    reorderByCategory: async (categoryId, orderedIds) => {
+        const res = await fetch(`${API_BASE_URL}/products/reorder/category`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ categoryId, orderedIds })
+        });
+        if (!res.ok) throw new Error('Kategori sıralaması güncellenemedi');
+        return res.json();
+    },
+
+    // Bulk delete products
+    bulkDelete: async (ids) => {
+        const res = await fetch(`${API_BASE_URL}/products/bulk/delete`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids })
+        });
+        if (!res.ok) throw new Error('Toplu silme başarısız');
+        return res.json();
+    },
+
+    // Seed test products
+    seed: async () => {
+        const res = await fetch(`${API_BASE_URL}/products/seed`, {
+            method: 'POST'
+        });
+        if (!res.ok) throw new Error('Test verileri eklenemedi');
+        return res.json();
+    },
+
+    // Bulk update products
+    bulkUpdate: async (ids, updates) => {
+        const res = await fetch(`${API_BASE_URL}/products/bulk/update`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids, updates })
+        });
+        if (!res.ok) throw new Error('Toplu güncelleme başarısız');
+        return res.json();
     }
 };
 
@@ -112,6 +154,31 @@ export const checkApiHealth = async () => {
         return res.ok;
     } catch {
         return false;
+    }
+};
+
+// Colors API
+export const colorsApi = {
+    getAll: async () => {
+        const res = await fetch(`${API_BASE_URL}/colors`);
+        if (!res.ok) throw new Error('Renkler yüklenemedi');
+        return res.json();
+    },
+
+    update: async (colorId, data) => {
+        const res = await fetch(`${API_BASE_URL}/colors/${colorId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Renk güncellenemedi');
+        return res.json();
+    },
+
+    reset: async () => {
+        const res = await fetch(`${API_BASE_URL}/colors/reset`, { method: 'POST' });
+        if (!res.ok) throw new Error('Renkler sıfırlanamadı');
+        return res.json();
     }
 };
 

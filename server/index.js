@@ -37,6 +37,7 @@ const authRoutes = require('./routes/auth');
 const customerRoutes = require('./routes/customers');
 const settingsRoutes = require('./routes/settings');
 const pagesRoutes = require('./routes/pages');
+const colorRoutes = require('./routes/colors');
 
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -47,6 +48,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/pages', pagesRoutes);
+app.use('/api/colors', colorRoutes);
 
 
 // Health check

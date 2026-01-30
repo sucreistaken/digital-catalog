@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2, Copy, Check, Package, Layers, Hash, Droplets, ChevronDown, Filter } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { colors, materials } from '../data/products';
-import { productsApi, categoriesApi } from '../utils/api';
+import { colors as staticColors, materials } from '../data/products';
+import { productsApi, categoriesApi, colorsApi } from '../utils/api';
 import './Catalog.css';
 
 // Get localized product name
@@ -20,13 +20,13 @@ const getCategoryName = (category, language) => {
 // Get material info
 const getMaterial = (materialId) => materials.find(m => m.id === materialId);
 
-// Get color info
-const getColor = (colorId) => colors.find(c => c.id === colorId);
+// Get color info (uses provided colors list, falls back to static)
+const getColor = (colorId, colorsList) => {
+    return colorsList?.find(c => c.id === colorId) || staticColors.find(c => c.id === colorId);
+};
 
 // Product Modal (Standard Version)
-const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProducts, onSwitchProduct, categories }) => {
-    if (!product) return null;
-
+const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProducts, onSwitchProduct, categories, colorsList }) => {
     if (!product) return null;
 
     // Initialize with default color if available
@@ -60,7 +60,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
     };
 
     // Determine current display color name
-    const selectedColorName = getColor(selectedColor)?.name || '';
+    const selectedColorName = getColor(selectedColor, colorsList)?.name || '';
 
     // Copy to clipboard
     const [copied, setCopied] = useState(false);
@@ -120,7 +120,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                                 <Ruler size={18} />
                                 <span className="spec-label">{t('dimensions')}</span>
                                 <span className="spec-value">
-                                    {product.dimensions?.width || 0} × {product.dimensions?.height || 0} {product.dimensions?.depth > 0 ? `× ${product.dimensions.depth}` : ''} mm
+                                    {product.dimensions?.width || 0} × {product.dimensions?.height || 0} {product.dimensions?.depth > 0 ? `× ${product.dimensions.depth}` : ''} cm
                                 </span>
                             </div>
                             {(product.packageDimensions?.width > 0 || product.packageDimensions?.height > 0 || product.packageDimensions?.depth > 0) && (
@@ -172,7 +172,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                             <div className="color-chips">
                                 {/* Current Product Colors */}
                                 {product.colors && product.colors.map(colorId => {
-                                    const color = getColor(colorId);
+                                    const color = getColor(colorId, colorsList);
                                     return (
                                         <button
                                             key={colorId}
@@ -190,7 +190,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                                     .map(sibling => {
                                         const colorId = sibling.primaryColor?.id || sibling.colors?.[0];
                                         if (!colorId) return null;
-                                        const color = getColor(colorId);
+                                        const color = getColor(colorId, colorsList);
                                         return (
                                             <button
                                                 key={sibling._id || sibling.id}
@@ -206,7 +206,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                                 {/* Legacy Variants */}
                                 {product.colorVariants && product.colorVariants.map(v => {
                                     if (product.colors && product.colors.includes(v.colorId)) return null;
-                                    const color = getColor(v.colorId);
+                                    const color = getColor(v.colorId, colorsList);
                                     return (
                                         <button
                                             key={v.colorId}
@@ -243,7 +243,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
 };
 
 // Product Card
-const ProductCard = ({ product, onClick, language, t }) => {
+const ProductCard = ({ product, onClick, language, t, index = 0, colorsList }) => {
     // Calculate scale style from saved imageScale
     const getImageStyle = () => {
         let style = { transition: 'transform 0.3s ease, filter 0.3s ease' };
@@ -275,7 +275,11 @@ const ProductCard = ({ product, onClick, language, t }) => {
     };
 
     return (
-        <div className="product-card" onClick={() => onClick(product)}>
+        <div
+            className="product-card card-animate-in"
+            onClick={() => onClick(product)}
+            style={{ animationDelay: `${Math.min(index * 0.04, 0.6)}s` }}
+        >
             <div className="product-image">
                 <img
                     src={product.image}
@@ -290,13 +294,13 @@ const ProductCard = ({ product, onClick, language, t }) => {
                 <span className="product-sku">{product.sku || 'Barkod'}</span>
                 <h3>{getProductName(product, language) || 'Yeni Ürün'}</h3>
                 <div className="product-specs-mini">
-                    <span>{product.dimensions?.width || 0}×{product.dimensions?.height || 0}{product.dimensions?.depth > 0 ? `×${product.dimensions.depth}` : ''} mm</span>
+                    <span>{product.dimensions?.width || 0}×{product.dimensions?.height || 0}{product.dimensions?.depth > 0 ? `×${product.dimensions.depth}` : ''} cm</span>
                     <span>•</span>
-                    <span>{product.volume || 0} Lt</span>
+                    <span>{product.volume ? `${product.volume} Lt` : `${product.weight || 0} kg`}</span>
                 </div>
                 <div className="product-colors-mini">
                     {product.colors && product.colors.slice(0, 4).map(colorId => {
-                        const color = getColor(colorId);
+                        const color = getColor(colorId, colorsList);
                         return <div key={colorId} className="mini-swatch" style={{ backgroundColor: color?.hex || '#ccc' }} />;
                     })}
                     {product.colors && product.colors.length > 4 && <span className="more-colors">+{product.colors.length - 4}</span>}
@@ -306,6 +310,23 @@ const ProductCard = ({ product, onClick, language, t }) => {
     );
 };
 
+// Skeleton Card for loading state
+const SkeletonCard = () => (
+    <div className="product-card skeleton-card">
+        <div className="product-image skeleton-image">
+            <div className="skeleton-pulse" />
+        </div>
+        <div className="product-info">
+            <div className="skeleton-line skeleton-line-sm" />
+            <div className="skeleton-line skeleton-line-lg" />
+            <div className="skeleton-line skeleton-line-md" />
+            <div className="skeleton-swatches">
+                {[1, 2, 3].map(i => <div key={i} className="skeleton-swatch" />)}
+            </div>
+        </div>
+    </div>
+);
+
 const Catalog = () => {
     const { t, language } = useLanguage();
     const [activeCategory, setActiveCategory] = useState('all');
@@ -313,14 +334,16 @@ const Catalog = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [colorsList, setColorsList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const MAX_VISIBLE_CATEGORIES = 5;
 
-    // Load products and categories from API
+    // Load products, categories and colors from API
     useEffect(() => {
         loadProducts();
         loadCategories();
+        loadColors();
     }, []);
 
     // Lock body scroll when modal is open
@@ -358,13 +381,32 @@ const Catalog = () => {
         }
     };
 
-    const filteredProducts = products.filter(product => {
-        const matchesCategory = activeCategory === 'all' || product.category === activeCategory;
-        const name = getProductName(product, language).toLowerCase();
-        const matchesSearch = name.includes(searchQuery.toLowerCase()) ||
-            product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-    });
+    const loadColors = async () => {
+        try {
+            const data = await colorsApi.getAll();
+            setColorsList(data);
+        } catch (err) {
+            console.error('Renkler yüklenemedi:', err);
+        }
+    };
+
+    const filteredProducts = products
+        .filter(product => {
+            const matchesCategory = activeCategory === 'all' || product.category === activeCategory;
+            const name = getProductName(product, language).toLowerCase();
+            const matchesSearch = name.includes(searchQuery.toLowerCase()) ||
+                product.sku?.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchesCategory && matchesSearch;
+        })
+        .sort((a, b) => {
+            // Sort by category order first, then by product order within category
+            const catA = categories.find(c => c.id === a.category);
+            const catB = categories.find(c => c.id === b.category);
+            const catOrderA = catA?.order ?? 999;
+            const catOrderB = catB?.order ?? 999;
+            if (catOrderA !== catOrderB) return catOrderA - catOrderB;
+            return (a.order || 0) - (b.order || 0);
+        });
 
     const handleRequestQuote = (product) => {
         setSelectedProduct(null);
@@ -412,6 +454,7 @@ const Catalog = () => {
                     allProducts={products}
                     onSwitchProduct={setSelectedProduct}
                     categories={categories}
+                    colorsList={colorsList}
                 />
             )}
 
@@ -480,33 +523,82 @@ const Catalog = () => {
 
                 {/* Products Grid */}
                 <div className="catalog-content">
-                    <div className="content-header">
-                        <div className="header-left">
-                            <h2 className="section-title">
-                                {activeCategory === 'all'
-                                    ? (language === 'tr' ? 'Tüm Ürünler' : 'All Products')
-                                    : getCategoryName(categories.find(c => c.id === activeCategory), language)
-                                }
-                            </h2>
-                            <p className="results-text">
-                                <strong>{filteredProducts.length}</strong> {t('products').toLowerCase()}
-                            </p>
-                        </div>
-                    </div>
+                    {loading ? (
+                        <>
+                            <div className="content-header">
+                                <div className="header-left">
+                                    <h2 className="section-title">{language === 'tr' ? 'Tüm Ürünler' : 'All Products'}</h2>
+                                </div>
+                            </div>
+                            <div className="products-grid">
+                                {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+                            </div>
+                        </>
+                    ) : activeCategory === 'all' && !searchQuery ? (
+                        /* Grouped by category view */
+                        categories
+                            .filter(cat => filteredProducts.some(p => p.category === cat.id))
+                            .map(cat => {
+                                const catProducts = filteredProducts.filter(p => p.category === cat.id);
+                                return (
+                                    <div key={cat.id} className="catalog-category-section">
+                                        <div className="category-section-header">
+                                            <div>
+                                                <h2 className="section-title">{getCategoryName(cat, language)}</h2>
+                                                <p className="results-text">
+                                                    <strong>{catProducts.length}</strong> {t('products').toLowerCase()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="products-grid">
+                                            {catProducts.map((product, index) => (
+                                                <ProductCard
+                                                    key={product._id || product.id}
+                                                    product={product}
+                                                    onClick={setSelectedProduct}
+                                                    language={language}
+                                                    t={t}
+                                                    index={index}
+                                                    colorsList={colorsList}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                    ) : (
+                        /* Filtered / single category view */
+                        <>
+                            <div className="content-header">
+                                <div className="header-left">
+                                    <h2 className="section-title">
+                                        {activeCategory === 'all'
+                                            ? (language === 'tr' ? 'Arama Sonuçları' : 'Search Results')
+                                            : getCategoryName(categories.find(c => c.id === activeCategory), language)
+                                        }
+                                    </h2>
+                                    <p className="results-text">
+                                        <strong>{filteredProducts.length}</strong> {t('products').toLowerCase()}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="products-grid">
+                                {filteredProducts.map((product, index) => (
+                                    <ProductCard
+                                        key={product._id || product.id}
+                                        product={product}
+                                        onClick={setSelectedProduct}
+                                        language={language}
+                                        t={t}
+                                        index={index}
+                                        colorsList={colorsList}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
 
-                    <div className="products-grid">
-                        {filteredProducts.map(product => (
-                            <ProductCard
-                                key={product._id || product.id}
-                                product={product}
-                                onClick={setSelectedProduct}
-                                language={language}
-                                t={t}
-                            />
-                        ))}
-                    </div>
-
-                    {filteredProducts.length === 0 && (
+                    {!loading && filteredProducts.length === 0 && (
                         <div className="no-results-state">
                             <div className="no-results-icon">
                                 <Search size={48} />
