@@ -29,6 +29,9 @@ Thumbs.db
 Dockerfile*
 docker-compose*
 
+# Uploaded files (runtime data, not part of build)
+server/uploads
+
 # Misc
 README.md
 *.md
