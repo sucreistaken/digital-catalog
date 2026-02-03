@@ -38,18 +38,29 @@ if (!fs.existsSync(thumbDir)) {
     fs.mkdirSync(thumbDir, { recursive: true });
 }
 
-// Save original and create thumbnail
+// Save original, create optimized web version, and create thumbnail
 async function saveWithThumbnail(buffer, originalName) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(originalName).toLowerCase() || '.jpg';
     const filename = uniqueSuffix + ext;
+    const webFilename = uniqueSuffix + '_web.webp';
     const thumbFilename = uniqueSuffix + '_thumb.webp';
 
     const originalPath = path.join(uploadDir, filename);
+    const webPath = path.join(uploadDir, webFilename);
     const thumbPath = path.join(thumbDir, thumbFilename);
 
-    // Save original file as-is (full quality)
+    // Save original file as-is (full quality backup)
     fs.writeFileSync(originalPath, buffer);
+
+    // Create optimized web version (max 1920px, WebP 92% quality)
+    await sharp(buffer)
+        .resize(1920, null, {
+            fit: 'inside',
+            withoutEnlargement: true
+        })
+        .webp({ quality: 92 })
+        .toFile(webPath);
 
     // Create small thumbnail for gallery (fast loading)
     await sharp(buffer)
@@ -62,8 +73,10 @@ async function saveWithThumbnail(buffer, originalName) {
 
     return {
         filename,
+        webFilename,
         thumbFilename,
-        url: `/uploads/${filename}`,
+        url: `/uploads/${webFilename}`,
+        originalUrl: `/uploads/${filename}`,
         thumbUrl: `/uploads/thumbs/${thumbFilename}`
     };
 }
@@ -93,6 +106,7 @@ router.post('/', (req, res) => {
             res.status(201).json({
                 message: 'Dosya başarıyla yüklendi',
                 url: result.url,
+                originalUrl: result.originalUrl,
                 thumbUrl: result.thumbUrl,
                 filename: result.filename
             });
@@ -125,6 +139,7 @@ router.post('/bulk', (req, res) => {
                 const result = await saveWithThumbnail(file.buffer, file.originalname);
                 return {
                     url: result.url,
+                    originalUrl: result.originalUrl,
                     thumbUrl: result.thumbUrl,
                     filename: result.filename,
                     originalName: file.originalname
@@ -153,14 +168,15 @@ router.get('/gallery', (req, res) => {
             return res.json({ files: [] });
         }
 
-        // Get original files (not thumbs)
+        // Get original files (not thumbs or _web optimized versions)
         const files = fs.readdirSync(uploadDir)
             .filter(file => {
-                // Skip directories and thumb files
+                // Skip directories, thumb files, and _web optimized files
                 const filePath = path.join(uploadDir, file);
                 return fs.statSync(filePath).isFile() &&
                     /\.(jpg|jpeg|png|gif|webp)$/i.test(file) &&
-                    !file.includes('_thumb');
+                    !file.includes('_thumb') &&
+                    !file.includes('_web');
             })
             .map(filename => {
                 const filePath = path.join(uploadDir, filename);
@@ -172,8 +188,14 @@ router.get('/gallery', (req, res) => {
                 const thumbPath = path.join(thumbDir, thumbFilename);
                 const hasThumb = fs.existsSync(thumbPath);
 
+                // Find corresponding optimized web version
+                const webFilename = baseName + '_web.webp';
+                const webPath = path.join(uploadDir, webFilename);
+                const hasWeb = fs.existsSync(webPath);
+
                 return {
                     url: `/uploads/${filename}`,
+                    optimizedUrl: hasWeb ? `/uploads/${webFilename}` : null,
                     thumbUrl: hasThumb ? `/uploads/thumbs/${thumbFilename}` : `/uploads/${filename}`,
                     filename: filename,
                     size: stats.size,
@@ -186,6 +208,93 @@ router.get('/gallery', (req, res) => {
     } catch (error) {
         console.error('❌ Gallery error:', error);
         res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+    }
+});
+
+// POST /api/upload/optimize-existing - Optimize selected products' images
+router.post('/optimize-existing', async (req, res) => {
+    try {
+        const { productIds } = req.body;
+
+        if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+            return res.status(400).json({ error: 'Lütfen optimize edilecek ürünleri seçin' });
+        }
+
+        // Get selected products from database
+        const products = await Product.find({ _id: { $in: productIds } });
+
+        let optimized = 0;
+        let skipped = 0;
+        let updatedProducts = 0;
+
+        for (const product of products) {
+            if (!product.image || !product.image.startsWith('/uploads/')) continue;
+
+            const imgFilename = product.image.split('/').pop();
+
+            // If already using _web.webp, find the original to re-optimize
+            let originalFilename;
+            if (imgFilename.includes('_web.webp')) {
+                const baseName = imgFilename.replace('_web.webp', '');
+                // Find the original file
+                const originals = fs.readdirSync(uploadDir).filter(f =>
+                    f.startsWith(baseName) && !f.includes('_web') && !f.includes('_thumb') &&
+                    /\.(jpg|jpeg|png|gif|webp)$/i.test(f)
+                );
+                if (originals.length > 0) {
+                    originalFilename = originals[0];
+                } else {
+                    skipped++;
+                    continue;
+                }
+            } else {
+                originalFilename = imgFilename;
+            }
+
+            const originalPath = path.join(uploadDir, originalFilename);
+            if (!fs.existsSync(originalPath)) {
+                skipped++;
+                continue;
+            }
+
+            const baseName = path.parse(originalFilename).name;
+            const webFilename = baseName + '_web.webp';
+            const webPath = path.join(uploadDir, webFilename);
+
+            try {
+                const buffer = fs.readFileSync(originalPath);
+
+                await sharp(buffer)
+                    .resize(1920, null, {
+                        fit: 'inside',
+                        withoutEnlargement: true
+                    })
+                    .webp({ quality: 92 })
+                    .toFile(webPath);
+
+                optimized++;
+
+                // Update product.image to point to optimized version
+                if (!product.image.includes('_web.webp')) {
+                    product.image = `/uploads/${webFilename}`;
+                    await product.save();
+                    updatedProducts++;
+                }
+            } catch (e) {
+                console.error(`Optimize edilemedi: ${originalFilename}`, e);
+            }
+        }
+
+        console.log(`✅ Optimizasyon tamamlandı: ${optimized} optimize edildi, ${skipped} atlandı, ${updatedProducts} ürün güncellendi`);
+        res.json({
+            message: `${optimized} görsel optimize edildi`,
+            optimized,
+            skipped,
+            updatedProducts
+        });
+    } catch (error) {
+        console.error('❌ Optimize error:', error);
+        res.status(500).json({ error: 'Optimizasyon hatası: ' + error.message });
     }
 });
 
@@ -205,12 +314,22 @@ router.delete('/all', async (req, res) => {
                 // Extract filename from URL (e.g., /uploads/123456.jpg -> 123456.jpg)
                 const filename = product.image.split('/').pop();
                 usedImages.add(filename);
+
+                // Also protect the original if a _web.webp version is used
+                if (filename.includes('_web.webp')) {
+                    const baseName = filename.replace('_web.webp', '');
+                    // Find and protect any original with this base name
+                    const originals = fs.readdirSync(uploadDir).filter(f =>
+                        f.startsWith(baseName) && !f.includes('_web') && !f.includes('_thumb')
+                    );
+                    originals.forEach(f => usedImages.add(f));
+                }
             }
         });
 
         console.log(`📦 Ürünlerde kullanılan ${usedImages.size} resim korunacak`);
 
-        // Get all original files (not in thumbs folder)
+        // Get all files in uploads (not in thumbs folder)
         const allFiles = fs.readdirSync(uploadDir)
             .filter(file => {
                 const filePath = path.join(uploadDir, file);
@@ -228,12 +347,14 @@ router.delete('/all', async (req, res) => {
             }
 
             try {
-                // Delete original file
+                // Delete file
                 fs.unlinkSync(path.join(uploadDir, file));
 
                 // Also delete corresponding thumbnail if exists
                 const baseName = path.parse(file).name;
-                const thumbFilename = baseName + '_thumb.webp';
+                // Strip _web suffix if present for thumb lookup
+                const thumbBase = baseName.replace('_web', '');
+                const thumbFilename = thumbBase + '_thumb.webp';
                 const thumbPath = path.join(thumbDir, thumbFilename);
                 if (fs.existsSync(thumbPath)) {
                     fs.unlinkSync(thumbPath);
@@ -274,6 +395,22 @@ router.delete('/:filename', (req, res) => {
         }
 
         fs.unlinkSync(filePath);
+
+        // Also delete optimized _web.webp version if exists
+        const baseName = path.parse(filename).name;
+        const webFilename = baseName + '_web.webp';
+        const webPath = path.join(uploadDir, webFilename);
+        if (fs.existsSync(webPath)) {
+            fs.unlinkSync(webPath);
+        }
+
+        // Also delete thumbnail if exists
+        const thumbFilename = baseName + '_thumb.webp';
+        const thumbPath = path.join(thumbDir, thumbFilename);
+        if (fs.existsSync(thumbPath)) {
+            fs.unlinkSync(thumbPath);
+        }
+
         console.log(`🗑️ Resim silindi: ${filename}`);
 
         res.json({ message: 'Dosya başarıyla silindi', filename });

@@ -126,6 +126,17 @@ export const productsApi = {
         return res.json();
     },
 
+    // Optimize selected products' images
+    optimizeImages: async (productIds) => {
+        const res = await fetch(`${API_BASE_URL}/upload/optimize-existing`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productIds })
+        });
+        if (!res.ok) throw new Error('Görsel optimizasyonu başarısız');
+        return res.json();
+    },
+
     // Seed test products
     seed: async () => {
         const res = await fetch(`${API_BASE_URL}/products/seed`, {
@@ -464,6 +475,61 @@ export const settingsApi = {
         const res = await fetch(`${API_BASE_URL}/settings/seed`, {
             method: 'POST'
         });
+        return res.json();
+    }
+};
+
+// Showroom API
+export const showroomApi = {
+    getAll: async () => {
+        const res = await fetch(`${API_BASE_URL}/showroom`);
+        if (!res.ok) throw new Error('Showroom verileri yüklenemedi');
+        return res.json();
+    },
+
+    create: async (node) => {
+        const res = await fetch(`${API_BASE_URL}/showroom`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(node)
+        });
+        if (!res.ok) throw new Error('Node eklenemedi');
+        return res.json();
+    },
+
+    update: async (id, node) => {
+        const res = await fetch(`${API_BASE_URL}/showroom/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(node)
+        });
+        if (!res.ok) throw new Error('Node güncellenemedi');
+        return res.json();
+    },
+
+    delete: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/showroom/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Node silinemedi');
+        return res.json();
+    },
+
+    reorder: async (orderedIds) => {
+        const res = await fetch(`${API_BASE_URL}/showroom/reorder/bulk`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds })
+        });
+        if (!res.ok) throw new Error('Sıralama güncellenemedi');
+        return res.json();
+    },
+
+    seed: async () => {
+        const res = await fetch(`${API_BASE_URL}/showroom/seed`, {
+            method: 'POST'
+        });
+        if (!res.ok) throw new Error('Seed verileri eklenemedi');
         return res.json();
     }
 };

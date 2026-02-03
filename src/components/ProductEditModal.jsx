@@ -33,6 +33,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
         image: 'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&q=80&w=600',
         inStock: true,
         featured: false,
+        hiddenFromCatalog: false,
         weight: 1.0,
         // New fields
         productCode: '',
@@ -106,7 +107,7 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                 image: product.image || '',
                 inStock: product.inStock ?? true,
                 featured: product.featured ?? false,
-                featured: product.featured ?? false,
+                hiddenFromCatalog: product.hiddenFromCatalog ?? false,
                 weight: product.weight || 1.0,
                 // New fields mapping
                 productCode: product.productCode || '',
@@ -854,6 +855,14 @@ const ProductEditModal = ({ product, isOpen, onClose, onSave }) => {
                                                     onChange={e => handleInputChange('featured', e.target.checked)}
                                                 />
                                                 Öne Çıkan
+                                            </label>
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.hiddenFromCatalog}
+                                                    onChange={e => handleInputChange('hiddenFromCatalog', e.target.checked)}
+                                                />
+                                                Katalogdan Gizle
                                             </label>
                                         </div>
                                     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Filter, Download, Loader2, GripVertical, X, FileText, CheckCircle, FileSpreadsheet, Copy, Check, Image, Layers, List, Package, ToggleLeft, ToggleRight, ChevronUp, ChevronDown, Database, ChevronLeft, ChevronRight, Palette, RotateCcw, Save } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Filter, Download, Loader2, GripVertical, X, FileText, CheckCircle, FileSpreadsheet, Copy, Check, Image, Layers, List, Package, ToggleLeft, ToggleRight, ChevronUp, ChevronDown, Database, ChevronLeft, ChevronRight, Palette, RotateCcw, Save, Zap } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { products as defaultProducts, materials, colors } from '../../data/products';
 import { generateProductCatalog } from '../../utils/pdfGenerator';
@@ -56,6 +56,9 @@ const Products = () => {
 
     // Seed state
     const [isSeeding, setIsSeeding] = useState(false);
+
+    // Optimize state
+    const [isOptimizing, setIsOptimizing] = useState(false);
 
     // Color editor state
     const [showColorEditor, setShowColorEditor] = useState(false);
@@ -214,6 +217,8 @@ const Products = () => {
                         return valA < valB ? -dir : valA > valB ? dir : 0;
                     case 'weight':
                         return ((a.weight || 0) - (b.weight || 0)) * dir;
+                    case 'imageSize':
+                        return ((a.imageSize || 0) - (b.imageSize || 0)) * dir;
                     case 'inStock':
                         valA = a.inStock ? 1 : 0;
                         valB = b.inStock ? 1 : 0;
@@ -321,7 +326,8 @@ const Products = () => {
         setExportComplete(false);
 
         try {
-            await generateProductCatalog(filteredProducts, categories, dbColors, (pct) => {
+            const exportProducts = filteredProducts.filter(p => !p.hiddenFromCatalog);
+            await generateProductCatalog(exportProducts, categories, dbColors, (pct) => {
                 setExportProgress(pct);
             });
 
@@ -405,6 +411,28 @@ const Products = () => {
             showToast('Test verileri eklenemedi!', 'error');
         } finally {
             setIsSeeding(false);
+        }
+    };
+
+    // Optimize selected products' images
+    const handleOptimizeImages = async () => {
+        const count = selectedIds.size;
+        if (!confirm(`${count} ürünün görselleri optimize edilecek. Devam etmek istiyor musunuz?`)) return;
+        try {
+            setIsOptimizing(true);
+            const result = await productsApi.optimizeImages([...selectedIds]);
+            const parts = [];
+            if (result.optimized > 0) parts.push(`${result.optimized} görsel optimize edildi`);
+            if (result.skipped > 0) parts.push(`${result.skipped} atlandı`);
+            if (result.updatedProducts > 0) parts.push(`${result.updatedProducts} ürün güncellendi`);
+            showToast(parts.join(', ') || 'Optimize edilecek görsel bulunamadı');
+            await loadProducts();
+            clearSelection();
+        } catch (err) {
+            console.error('Optimize error:', err);
+            showToast('Görsel optimizasyonu başarısız!', 'error');
+        } finally {
+            setIsOptimizing(false);
         }
     };
 
@@ -654,6 +682,40 @@ const Products = () => {
         }
     };
 
+    const handleToggleVisibility = async (product) => {
+        const newVal = !product.hiddenFromCatalog;
+        try {
+            const updated = await productsApi.update(product._id || product.id, { hiddenFromCatalog: newVal });
+            setProducts(products.map(p =>
+                (p._id || p.id) === (updated._id || updated.id) ? updated : p
+            ));
+            showToast(newVal ? 'Ürün katalogdan gizlendi' : 'Ürün katalogda gösterildi');
+        } catch (err) {
+            console.error('Visibility toggle error:', err);
+            showToast('Görünürlük güncellenemedi!', 'error');
+        }
+    };
+
+    const handleBulkVisibilityToggle = async (hidden) => {
+        try {
+            const ids = [...selectedIds];
+            const updated = await productsApi.bulkUpdate(ids, { hiddenFromCatalog: hidden });
+            setProducts(updated);
+            showToast(`${ids.length} ürün ${hidden ? 'gizlendi' : 'gösterildi'}`);
+            clearSelection();
+        } catch (err) {
+            console.error('Bulk visibility error:', err);
+            showToast('Görünürlük güncellenemedi!', 'error');
+        }
+    };
+
+    const formatFileSize = (bytes) => {
+        if (!bytes) return '—';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    };
+
     const isAllSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedIds.has(p._id || p.id));
 
     return (
@@ -860,6 +922,23 @@ const Products = () => {
                             <ToggleLeft size={15} />
                             Tükendi
                         </button>
+                        {/* Visibility toggle */}
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => handleBulkVisibilityToggle(true)}
+                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                        >
+                            <EyeOff size={15} />
+                            Gizle
+                        </button>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => handleBulkVisibilityToggle(false)}
+                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                        >
+                            <Eye size={15} />
+                            Göster
+                        </button>
                         {/* Scale */}
                         <div style={{ position: 'relative' }}>
                             <button
@@ -911,6 +990,16 @@ const Products = () => {
                                 </div>
                             )}
                         </div>
+                        {/* Optimize images */}
+                        <button
+                            className="btn btn-secondary"
+                            onClick={handleOptimizeImages}
+                            disabled={isOptimizing}
+                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                        >
+                            {isOptimizing ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
+                            {isOptimizing ? 'Optimize Ediliyor...' : 'Optimize Et'}
+                        </button>
                         {/* Bulk delete */}
                         <button
                             className="btn btn-secondary"
@@ -968,6 +1057,9 @@ const Products = () => {
                                 Ağırlık<SortIcon column="weight" />
                             </th>
                             <th>Renkler</th>
+                            <th onClick={() => handleSort('imageSize')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Görsel<SortIcon column="imageSize" />
+                            </th>
                             <th onClick={() => handleSort('inStock')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                 Durum<SortIcon column="inStock" />
                             </th>
@@ -980,7 +1072,7 @@ const Products = () => {
                             getCategoryGroups().map(group => {
                                 const catLangKey = `name${language.charAt(0).toUpperCase() + language.slice(1)}`;
                                 const catDisplayName = group.category[catLangKey] || group.category.name;
-                                const colSpan = (isDragEnabled ? 9 : 8) + 1; // +1 for checkbox
+                                const colSpan = (isDragEnabled ? 10 : 9) + 1; // +1 for checkbox
                                 return (
                                     <React.Fragment key={group.category.id}>
                                         <tr
@@ -1091,13 +1183,34 @@ const Products = () => {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span className={`status-badge ${product.inStock ? 'in-stock' : 'out-stock'}`}>
-                                                        {product.inStock ? 'Stokta' : 'Tükendi'}
+                                                    <span style={{
+                                                        fontSize: '0.8rem',
+                                                        fontFamily: 'monospace',
+                                                        color: product.imageSize && product.imageSize > 1024 * 1024 ? '#ef4444' : 'var(--color-text-muted)'
+                                                    }}>
+                                                        {formatFileSize(product.imageSize)}
                                                     </span>
                                                 </td>
                                                 <td>
+                                                    <span className={`status-badge ${product.inStock ? 'in-stock' : 'out-stock'}`}>
+                                                        {product.inStock ? 'Stokta' : 'Tükendi'}
+                                                    </span>
+                                                    {product.hiddenFromCatalog && (
+                                                        <span className="status-badge" style={{ background: '#f59e0b', color: 'white', marginLeft: '4px' }}>
+                                                            Gizli
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
                                                     <div className="action-buttons">
-                                                        <button className="action-btn" title="Görüntüle"><Eye size={16} /></button>
+                                                        <button
+                                                            className="action-btn"
+                                                            title={product.hiddenFromCatalog ? 'Katalogda Göster' : 'Katalogdan Gizle'}
+                                                            onClick={() => handleToggleVisibility(product)}
+                                                            style={product.hiddenFromCatalog ? { color: '#f59e0b' } : {}}
+                                                        >
+                                                            {product.hiddenFromCatalog ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                        </button>
                                                         <button className="action-btn" title="Düzenle" onClick={() => handleEditProduct(product)}>
                                                             <Edit size={16} />
                                                         </button>
@@ -1185,13 +1298,34 @@ const Products = () => {
                                         </div>
                                     </td>
                                     <td>
-                                        <span className={`status-badge ${product.inStock ? 'in-stock' : 'out-stock'}`}>
-                                            {product.inStock ? 'Stokta' : 'Tükendi'}
+                                        <span style={{
+                                            fontSize: '0.8rem',
+                                            fontFamily: 'monospace',
+                                            color: product.imageSize && product.imageSize > 1024 * 1024 ? '#ef4444' : 'var(--color-text-muted)'
+                                        }}>
+                                            {formatFileSize(product.imageSize)}
                                         </span>
                                     </td>
                                     <td>
+                                        <span className={`status-badge ${product.inStock ? 'in-stock' : 'out-stock'}`}>
+                                            {product.inStock ? 'Stokta' : 'Tükendi'}
+                                        </span>
+                                        {product.hiddenFromCatalog && (
+                                            <span className="status-badge" style={{ background: '#f59e0b', color: 'white', marginLeft: '4px' }}>
+                                                Gizli
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
                                         <div className="action-buttons">
-                                            <button className="action-btn" title="Görüntüle"><Eye size={16} /></button>
+                                            <button
+                                                className="action-btn"
+                                                title={product.hiddenFromCatalog ? 'Katalogda Göster' : 'Katalogdan Gizle'}
+                                                onClick={() => handleToggleVisibility(product)}
+                                                style={product.hiddenFromCatalog ? { color: '#f59e0b' } : {}}
+                                            >
+                                                {product.hiddenFromCatalog ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
                                             <button className="action-btn" title="Düzenle" onClick={() => handleEditProduct(product)}>
                                                 <Edit size={16} />
                                             </button>
@@ -1364,7 +1498,7 @@ const Products = () => {
                                     </div>
                                     <h2>Katalog Dışa Aktar</h2>
                                     <p className="export-subtitle">
-                                        {filteredProducts.length} ürün PDF olarak indirilecek
+                                        {filteredProducts.filter(p => !p.hiddenFromCatalog).length} ürün PDF olarak indirilecek (gizli ürünler hariç)
                                     </p>
 
                                     <div className="export-info">

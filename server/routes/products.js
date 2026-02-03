@@ -1,12 +1,31 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
 const Product = require('../models/Product');
+
+const uploadDir = path.join(__dirname, '../uploads');
+
+// Attach image file size (bytes) to a product object
+function attachImageSize(product) {
+    const obj = product.toObject ? product.toObject() : { ...product };
+    if (obj.image && obj.image.startsWith('/uploads/')) {
+        const filename = obj.image.split('/').pop();
+        const filePath = path.join(uploadDir, filename);
+        try {
+            if (fs.existsSync(filePath)) {
+                obj.imageSize = fs.statSync(filePath).size;
+            }
+        } catch (_) {}
+    }
+    return obj;
+}
 
 // GET all products
 router.get('/', async (req, res) => {
     try {
         const products = await Product.find().sort({ order: 1, createdAt: -1 });
-        res.json(products);
+        res.json(products.map(attachImageSize));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -85,7 +104,7 @@ router.put('/bulk/update', async (req, res) => {
             return res.status(400).json({ error: 'updates objesi gerekli' });
         }
 
-        const allowedFields = ['category', 'inStock', 'material', 'featured', 'imageScale'];
+        const allowedFields = ['category', 'inStock', 'material', 'featured', 'imageScale', 'hiddenFromCatalog'];
         const safeUpdates = {};
         for (const field of allowedFields) {
             if (updates[field] !== undefined) {
@@ -225,7 +244,7 @@ router.put('/sync-group/:groupId', async (req, res) => {
 
         // Update all products with synced fields
         const updateData = {};
-        const allowedSyncFields = ['dimensions', 'weight', 'material', 'category', 'description', 'descriptionTr', 'image', 'imageScale', 'sizeVariants', 'defaultSize', 'inStock'];
+        const allowedSyncFields = ['dimensions', 'weight', 'material', 'category', 'description', 'descriptionTr', 'image', 'imageScale', 'sizeVariants', 'defaultSize', 'inStock', 'hiddenFromCatalog'];
 
         for (const field of allowedSyncFields) {
             if (syncFields[field] !== undefined) {

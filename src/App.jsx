@@ -18,6 +18,7 @@ import Customers from './pages/admin/Customers';
 import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
 import SiteContent from './pages/admin/SiteContent';
+import ShowroomTour from './pages/admin/ShowroomTour';
 
 function App() {
   return (
@@ -68,6 +69,11 @@ function App() {
         <Route path="/admin/settings" element={
           <ProtectedRoute>
             <Layout type="admin"><Settings /></Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/showroom-tour" element={
+          <ProtectedRoute>
+            <Layout type="admin"><ShowroomTour /></Layout>
           </ProtectedRoute>
         } />
         <Route path="/admin/content" element={

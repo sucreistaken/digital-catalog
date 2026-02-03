@@ -38,6 +38,7 @@ const customerRoutes = require('./routes/customers');
 const settingsRoutes = require('./routes/settings');
 const pagesRoutes = require('./routes/pages');
 const colorRoutes = require('./routes/colors');
+const showroomRoutes = require('./routes/showroom');
 
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -49,6 +50,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/pages', pagesRoutes);
 app.use('/api/colors', colorRoutes);
+app.use('/api/showroom', showroomRoutes);
 
 
 // Health check

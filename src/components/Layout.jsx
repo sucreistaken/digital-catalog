@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Package, Folder, MessageSquare, Users, Settings, LogOut, ChevronDown, BarChart2, FileText } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Package, Folder, MessageSquare, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import '../styles/layout.css';
@@ -182,6 +182,7 @@ const AdminLayout = ({ children }) => {
         { path: '/admin/categories', icon: Folder, label: t('categories') },
         { path: '/admin/quotes', icon: MessageSquare, label: t('quoteRequests') },
         { path: '/admin/customers', icon: Users, label: t('customers') },
+        { path: '/admin/showroom-tour', icon: Globe, label: 'Showroom Tur' },
         { path: '/admin/content', icon: FileText, label: 'Site İçerikleri' },
         { path: '/admin/analytics', icon: BarChart2, label: 'Analytics' },
         { path: '/admin/settings', icon: Settings, label: t('settings') },

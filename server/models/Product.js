@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
     image: { type: String },
     inStock: { type: Boolean, default: true },
     featured: { type: Boolean, default: false },
+    hiddenFromCatalog: { type: Boolean, default: false },
     order: { type: Number, default: 0 }, // Sıralama için
     colors: [{ type: String }],
     weight: { type: Number },

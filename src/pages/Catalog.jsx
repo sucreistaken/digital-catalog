@@ -390,7 +390,10 @@ const Catalog = () => {
         }
     };
 
-    const filteredProducts = products
+    // Products visible in catalog (excluding hidden)
+    const visibleProducts = products.filter(p => !p.hiddenFromCatalog);
+
+    const filteredProducts = visibleProducts
         .filter(product => {
             const matchesCategory = activeCategory === 'all' || product.category === activeCategory;
             const name = getProductName(product, language).toLowerCase();
@@ -494,7 +497,7 @@ const Catalog = () => {
                                 onClick={() => setActiveCategory('all')}
                             >
                                 <span className="cat-name">{t('all')}</span>
-                                <span className="cat-count">{products.length}</span>
+                                <span className="cat-count">{visibleProducts.length}</span>
                             </button>
                             {categories.map(cat => (
                                 <button
@@ -504,7 +507,7 @@ const Catalog = () => {
                                 >
                                     <span className="cat-name">{getCategoryName(cat, language)}</span>
                                     <span className="cat-count">
-                                        {products.filter(p => p.category === cat.id).length}
+                                        {visibleProducts.filter(p => p.category === cat.id).length}
                                     </span>
                                 </button>
                             ))}
