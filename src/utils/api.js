@@ -126,6 +126,20 @@ export const productsApi = {
         return res.json();
     },
 
+    // Upload showroom panorama image (no optimization, original quality)
+    uploadShowroomImage: async (file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const res = await fetch(`${API_BASE_URL}/upload/showroom`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!res.ok) throw new Error('Showroom görseli yüklenemedi');
+        return res.json();
+    },
+
     // Optimize selected products' images
     optimizeImages: async (productIds) => {
         const res = await fetch(`${API_BASE_URL}/upload/optimize-existing`, {
@@ -530,6 +544,53 @@ export const showroomApi = {
             method: 'POST'
         });
         if (!res.ok) throw new Error('Seed verileri eklenemedi');
+        return res.json();
+    }
+};
+
+// Hero Slides API
+export const heroSlidesApi = {
+    getAll: async () => {
+        const res = await fetch(`${API_BASE_URL}/hero-slides`);
+        if (!res.ok) throw new Error('Hero slides yüklenemedi');
+        return res.json();
+    },
+
+    create: async (slide) => {
+        const res = await fetch(`${API_BASE_URL}/hero-slides`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(slide)
+        });
+        if (!res.ok) throw new Error('Slide eklenemedi');
+        return res.json();
+    },
+
+    update: async (id, slide) => {
+        const res = await fetch(`${API_BASE_URL}/hero-slides/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(slide)
+        });
+        if (!res.ok) throw new Error('Slide güncellenemedi');
+        return res.json();
+    },
+
+    delete: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/hero-slides/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Slide silinemedi');
+        return res.json();
+    },
+
+    reorder: async (orderedIds) => {
+        const res = await fetch(`${API_BASE_URL}/hero-slides/reorder/bulk`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds })
+        });
+        if (!res.ok) throw new Error('Sıralama güncellenemedi');
         return res.json();
     }
 };

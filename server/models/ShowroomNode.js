@@ -6,6 +6,8 @@ const showroomNodeSchema = new mongoose.Schema({
     panoramaImage: { type: String, required: true },
     order: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
+    defaultYaw: { type: Number, default: 0 },
+    defaultPitch: { type: Number, default: 0 },
     links: [{
         targetNodeId: { type: String, required: true },
         yaw: { type: Number, default: 0 },

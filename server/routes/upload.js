@@ -211,6 +211,45 @@ router.get('/gallery', (req, res) => {
     }
 });
 
+// POST /api/upload/showroom - Upload panorama image without any optimization
+router.post('/showroom', (req, res) => {
+    upload.single('image')(req, res, async function (err) {
+        if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ error: 'Dosya boyutu çok büyük! Maksimum 100MB yükleyebilirsiniz.' });
+            }
+            return res.status(400).json({ error: `Yükleme hatası: ${err.message}` });
+        } else if (err) {
+            return res.status(400).json({ error: err.message });
+        }
+
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'Lütfen bir dosya seçin' });
+            }
+
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg';
+            const filename = uniqueSuffix + ext;
+            const filePath = path.join(uploadDir, filename);
+
+            // Save original file as-is — no resize, no conversion
+            fs.writeFileSync(filePath, req.file.buffer);
+
+            console.log(`✅ Showroom görseli yüklendi: ${filename}`);
+
+            res.status(201).json({
+                message: 'Dosya başarıyla yüklendi',
+                url: `/uploads/${filename}`,
+                filename
+            });
+        } catch (error) {
+            console.error('❌ Showroom upload error:', error);
+            res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+        }
+    });
+});
+
 // POST /api/upload/optimize-existing - Optimize selected products' images
 router.post('/optimize-existing', async (req, res) => {
     try {

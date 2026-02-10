@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, GripVertical, Loader2, Database, X, Save, Link as LinkIcon, Image, Eye, EyeOff, Upload } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Trash2, Edit, GripVertical, Loader2, Database, X, Save, Link as LinkIcon, Image, Eye, EyeOff, Upload, Crosshair, Navigation, MousePointerClick, RotateCcw } from 'lucide-react';
+import { Viewer } from '@photo-sphere-viewer/core';
+import '@photo-sphere-viewer/core/index.css';
 import { showroomApi, productsApi } from '../../utils/api';
 import '../Dashboard.css';
 
@@ -209,7 +211,7 @@ const ShowroomTour = () => {
                         {isSavingOrder && <Loader2 size={14} className="animate-spin" style={{ marginLeft: '8px' }} />}
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {nodes.map(node => (
                             <div
                                 key={node._id}
@@ -227,91 +229,92 @@ const ShowroomTour = () => {
                                         ? '3px solid var(--color-primary)'
                                         : '3px solid transparent',
                                     opacity: !node.isActive ? 0.6 : 1,
-                                    padding: 0,
-                                    overflow: 'hidden'
+                                    padding: '8px 12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px'
                                 }}
                             >
-                                {/* Thumbnail */}
-                                <div style={{
-                                    height: '140px', background: '#f0f0f0', position: 'relative',
-                                    backgroundImage: `url(${node.panoramaImage})`,
-                                    backgroundSize: 'cover', backgroundPosition: 'center'
-                                }}>
-                                    <div style={{
-                                        position: 'absolute', top: '8px', left: '8px',
-                                        background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 8px',
-                                        borderRadius: '4px', fontSize: '0.75rem'
-                                    }}>
+                                {/* Drag handle + order */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '40px' }}>
+                                    <GripVertical size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>
                                         #{node.order}
-                                    </div>
-                                    <div style={{
-                                        position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px'
-                                    }}>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleToggleActive(node); }}
-                                            style={{
-                                                background: 'rgba(0,0,0,0.6)', color: node.isActive ? '#22c55e' : '#ef4444',
-                                                border: 'none', borderRadius: '4px', padding: '4px 6px', cursor: 'pointer'
-                                            }}
-                                            title={node.isActive ? 'Pasife al' : 'Aktif et'}
-                                        >
-                                            {node.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
-                                        </button>
-                                    </div>
+                                    </span>
                                 </div>
 
-                                {/* Info */}
-                                <div style={{ padding: '12px 16px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <GripVertical size={16} style={{ color: 'var(--color-text-muted)' }} />
-                                            <h3 style={{ margin: 0, fontSize: '1rem' }}>{node.name}</h3>
-                                        </div>
+                                {/* Small thumbnail */}
+                                <div style={{
+                                    width: '48px', height: '48px', borderRadius: 'var(--radius-sm)',
+                                    backgroundImage: `url(${node.panoramaImage})`,
+                                    backgroundSize: 'cover', backgroundPosition: 'center',
+                                    background: node.panoramaImage ? undefined : '#f0f0f0',
+                                    flexShrink: 0
+                                }}>
+                                    {node.panoramaImage && (
+                                        <div style={{
+                                            width: '100%', height: '100%', borderRadius: 'var(--radius-sm)',
+                                            backgroundImage: `url(${node.panoramaImage})`,
+                                            backgroundSize: 'cover', backgroundPosition: 'center'
+                                        }} />
+                                    )}
+                                </div>
+
+                                {/* Name & info */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <h3 style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {node.name}
+                                        </h3>
                                         <span style={{
-                                            fontSize: '0.75rem', background: 'var(--color-bg-secondary)',
-                                            padding: '2px 8px', borderRadius: '12px', color: 'var(--color-text-muted)'
+                                            fontSize: '0.7rem', background: 'var(--color-bg-secondary)',
+                                            padding: '1px 6px', borderRadius: '8px', color: 'var(--color-text-muted)',
+                                            flexShrink: 0
                                         }}>
                                             {node.nodeId}
                                         </span>
                                     </div>
-
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
-                                        <LinkIcon size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                                        {node.links?.length || 0} bağlantı
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>
+                                            <LinkIcon size={12} style={{ verticalAlign: 'middle', marginRight: '3px' }} />
+                                            {node.links?.length || 0} bağlantı
+                                        </span>
+                                        {node.links && node.links.length > 0 && (
+                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                ({node.links.map(l => l.targetNodeId).join(', ')})
+                                            </span>
+                                        )}
                                     </div>
+                                </div>
 
-                                    {/* Links summary */}
-                                    {node.links && node.links.length > 0 && (
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px' }}>
-                                            {node.links.map((link, i) => (
-                                                <span key={i} style={{
-                                                    fontSize: '0.7rem', background: 'var(--color-bg-secondary)',
-                                                    padding: '2px 8px', borderRadius: '8px',
-                                                    color: 'var(--color-text-muted)'
-                                                }}>
-                                                    {link.targetNodeId} ({Math.round(link.yaw * 180 / Math.PI)}°)
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button
-                                            className="btn btn-secondary"
-                                            onClick={() => openEditModal(node)}
-                                            style={{ flex: 1, padding: '6px 12px', fontSize: '0.85rem' }}
-                                        >
-                                            <Edit size={14} />
-                                            Düzenle
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary"
-                                            onClick={() => handleDelete(node._id)}
-                                            style={{ padding: '6px 12px', fontSize: '0.85rem', color: '#ef4444', borderColor: '#ef4444' }}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                                {/* Actions */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleToggleActive(node); }}
+                                        style={{
+                                            background: 'none', border: '1px solid var(--color-border)',
+                                            borderRadius: 'var(--radius-sm)', padding: '5px 7px', cursor: 'pointer',
+                                            color: node.isActive ? '#22c55e' : '#ef4444',
+                                            display: 'flex', alignItems: 'center'
+                                        }}
+                                        title={node.isActive ? 'Pasife al' : 'Aktif et'}
+                                    >
+                                        {node.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => openEditModal(node)}
+                                        style={{ padding: '5px 10px', fontSize: '0.8rem' }}
+                                    >
+                                        <Edit size={14} />
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => handleDelete(node._id)}
+                                        style={{ padding: '5px 7px', color: '#ef4444', borderColor: '#ef4444' }}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -333,16 +336,31 @@ const ShowroomTour = () => {
 };
 
 // ---- Node Edit Modal ----
+const MODES = { VIEW: 'view', ARROW: 'arrow' };
+
 const NodeModal = ({ node, allNodes, onSave, onClose }) => {
     const [form, setForm] = useState({
         nodeId: node?.nodeId || '',
         name: node?.name || '',
         panoramaImage: node?.panoramaImage || '',
         isActive: node?.isActive ?? true,
+        defaultYaw: node?.defaultYaw || 0,
+        defaultPitch: node?.defaultPitch || 0,
         links: node?.links?.map(l => ({ ...l })) || []
     });
     const [uploading, setUploading] = useState(false);
+    const [mode, setMode] = useState(MODES.VIEW);
+    const [activeLinkIndex, setActiveLinkIndex] = useState(null);
+    const [feedback, setFeedback] = useState(null); // { text, color }
     const fileInputRef = useRef(null);
+    const previewContainerRef = useRef(null);
+    const previewViewerRef = useRef(null);
+    const modeRef = useRef(mode);
+    const activeLinkRef = useRef(activeLinkIndex);
+
+    // Keep refs in sync
+    useEffect(() => { modeRef.current = mode; }, [mode]);
+    useEffect(() => { activeLinkRef.current = activeLinkIndex; }, [activeLinkIndex]);
 
     const handleChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -353,8 +371,8 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
         if (!file) return;
         try {
             setUploading(true);
-            const result = await productsApi.uploadImage(file);
-            handleChange('panoramaImage', result.imageUrl || result.url);
+            const result = await productsApi.uploadShowroomImage(file);
+            handleChange('panoramaImage', result.url);
         } catch (err) {
             console.error('Upload error:', err);
         } finally {
@@ -362,12 +380,120 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
         }
     };
 
+    const showFeedback = (text, color = '#34C759') => {
+        setFeedback({ text, color });
+        setTimeout(() => setFeedback(null), 1200);
+    };
+
+    // Initialize panorama preview viewer
+    useEffect(() => {
+        if (!form.panoramaImage || !previewContainerRef.current) return;
+
+        const timer = setTimeout(() => {
+            if (!previewContainerRef.current) return;
+
+            if (previewViewerRef.current) {
+                previewViewerRef.current.destroy();
+                previewViewerRef.current = null;
+            }
+
+            try {
+                previewViewerRef.current = new Viewer({
+                    container: previewContainerRef.current,
+                    panorama: form.panoramaImage,
+                    navbar: false,
+                    loadingTxt: '',
+                    defaultYaw: form.defaultYaw || 0,
+                    defaultPitch: form.defaultPitch || 0,
+                    touchmoveTwoFingers: false,
+                    mousewheelCtrlKey: false,
+                });
+
+                previewViewerRef.current.addEventListener('click', (e) => {
+                    const currentMode = modeRef.current;
+                    const currentLinkIdx = activeLinkRef.current;
+
+                    if (currentMode === MODES.VIEW) {
+                        // Set initial view direction
+                        setForm(prev => ({
+                            ...prev,
+                            defaultYaw: e.data.yaw,
+                            defaultPitch: e.data.pitch
+                        }));
+                        showFeedback('Başlangıç bakış açısı ayarlandı!');
+                    } else if (currentMode === MODES.ARROW && currentLinkIdx !== null) {
+                        // Set arrow position
+                        setForm(prev => {
+                            const newLinks = [...prev.links];
+                            if (newLinks[currentLinkIdx]) {
+                                newLinks[currentLinkIdx] = {
+                                    ...newLinks[currentLinkIdx],
+                                    yaw: e.data.yaw,
+                                    pitch: e.data.pitch
+                                };
+                            }
+                            return { ...prev, links: newLinks };
+                        });
+                        showFeedback('Ok konumu ayarlandı!');
+                    }
+                });
+            } catch (err) {
+                console.error('Preview viewer init error:', err);
+            }
+        }, 300);
+
+        return () => {
+            clearTimeout(timer);
+            if (previewViewerRef.current) {
+                previewViewerRef.current.destroy();
+                previewViewerRef.current = null;
+            }
+        };
+    }, [form.panoramaImage]);
+
+    // When switching to VIEW mode, rotate to current defaultYaw/defaultPitch
+    const switchToViewMode = () => {
+        setMode(MODES.VIEW);
+        setActiveLinkIndex(null);
+        if (previewViewerRef.current) {
+            previewViewerRef.current.animate({
+                yaw: form.defaultYaw || 0,
+                pitch: form.defaultPitch || 0,
+                speed: '3rpm'
+            });
+        }
+    };
+
+    const switchToArrowMode = () => {
+        setMode(MODES.ARROW);
+    };
+
+    // Navigate viewer to selected link's position
+    const selectLink = useCallback((index) => {
+        setActiveLinkIndex(index);
+        setMode(MODES.ARROW);
+        if (previewViewerRef.current && form.links[index]) {
+            previewViewerRef.current.animate({
+                yaw: form.links[index].yaw || 0,
+                pitch: form.links[index].pitch || 0,
+                speed: '3rpm'
+            });
+        }
+    }, [form.links]);
+
     // Link management
     const addLink = () => {
+        const viewerPos = previewViewerRef.current?.getPosition();
         setForm(prev => ({
             ...prev,
-            links: [...prev.links, { targetNodeId: '', yaw: 0, pitch: 0 }]
+            links: [...prev.links, {
+                targetNodeId: '',
+                yaw: viewerPos?.yaw || 0,
+                pitch: viewerPos?.pitch || 0
+            }]
         }));
+        setMode(MODES.ARROW);
+        setTimeout(() => setActiveLinkIndex(form.links.length), 50);
     };
 
     const removeLink = (index) => {
@@ -375,6 +501,8 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
             ...prev,
             links: prev.links.filter((_, i) => i !== index)
         }));
+        if (activeLinkIndex === index) setActiveLinkIndex(null);
+        else if (activeLinkIndex !== null && activeLinkIndex > index) setActiveLinkIndex(activeLinkIndex - 1);
     };
 
     const updateLink = (index, field, value) => {
@@ -392,10 +520,12 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
     };
 
     const otherNodes = allNodes.filter(n => n.nodeId !== form.nodeId);
+    const isViewMode = mode === MODES.VIEW;
+    const borderColor = isViewMode ? '#3b82f6' : '#34C759';
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="export-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '90vh', overflow: 'auto' }}>
+            <div className="export-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '820px', maxHeight: '90vh', overflow: 'auto' }}>
                 <button className="modal-close-btn" onClick={onClose}>
                     <X size={20} />
                 </button>
@@ -443,8 +573,8 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
                             </div>
                         </div>
 
-                        {/* Panorama image */}
-                        <div style={{ marginBottom: '16px' }}>
+                        {/* Panorama image upload */}
+                        <div style={{ marginBottom: '12px' }}>
                             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', marginBottom: '4px' }}>
                                 Panorama Görsel *
                             </label>
@@ -478,18 +608,115 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
                                     Yükle
                                 </button>
                             </div>
-                            {form.panoramaImage && (
-                                <div style={{
-                                    marginTop: '8px', height: '100px', borderRadius: 'var(--radius-md)',
-                                    backgroundImage: `url(${form.panoramaImage})`,
-                                    backgroundSize: 'cover', backgroundPosition: 'center',
-                                    border: '1px solid var(--color-border)'
-                                }} />
-                            )}
                         </div>
 
+                        {/* ===== PANORAMA PREVIEW + MODE TABS ===== */}
+                        {form.panoramaImage && (
+                            <div style={{ marginBottom: '16px' }}>
+                                {/* Mode Tabs */}
+                                <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', background: 'var(--color-bg-secondary)', borderRadius: '10px', padding: '3px' }}>
+                                    <button
+                                        type="button"
+                                        onClick={switchToViewMode}
+                                        style={{
+                                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                            padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                                            fontSize: '0.8rem', fontWeight: '600', transition: 'all 0.15s',
+                                            background: isViewMode ? '#3b82f6' : 'transparent',
+                                            color: isViewMode ? 'white' : 'var(--color-text-muted)'
+                                        }}
+                                    >
+                                        <Eye size={14} />
+                                        Başlangıç Bakış Açısı
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={switchToArrowMode}
+                                        style={{
+                                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                            padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                                            fontSize: '0.8rem', fontWeight: '600', transition: 'all 0.15s',
+                                            background: !isViewMode ? '#34C759' : 'transparent',
+                                            color: !isViewMode ? 'white' : 'var(--color-text-muted)'
+                                        }}
+                                    >
+                                        <Navigation size={14} />
+                                        Ok Konumları
+                                    </button>
+                                </div>
+
+                                {/* Panorama Viewer */}
+                                <div style={{ position: 'relative' }}>
+                                    <div
+                                        ref={previewContainerRef}
+                                        style={{
+                                            width: '100%',
+                                            height: '300px',
+                                            borderRadius: 'var(--radius-md)',
+                                            overflow: 'hidden',
+                                            border: `2px solid ${borderColor}`,
+                                            transition: 'border-color 0.2s'
+                                        }}
+                                    />
+                                    {/* Crosshair overlay */}
+                                    <div style={{
+                                        position: 'absolute', top: '50%', left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        pointerEvents: 'none', zIndex: 10
+                                    }}>
+                                        <Crosshair size={30} color={feedback ? feedback.color : 'rgba(255,255,255,0.7)'}
+                                            style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.6))', transition: 'color 0.2s' }} />
+                                    </div>
+
+                                    {/* Mode label (top-left) */}
+                                    <div style={{
+                                        position: 'absolute', top: '8px', left: '8px', pointerEvents: 'none', zIndex: 10,
+                                        background: isViewMode ? 'rgba(59,130,246,0.85)' : 'rgba(52,199,89,0.85)',
+                                        backdropFilter: 'blur(8px)', color: 'white', padding: '4px 10px',
+                                        borderRadius: '6px', fontSize: '0.7rem', fontWeight: '600',
+                                        display: 'flex', alignItems: 'center', gap: '4px', transition: 'background 0.2s'
+                                    }}>
+                                        <MousePointerClick size={12} />
+                                        {isViewMode ? 'Tıkla = Başlangıç bakışı' : activeLinkIndex !== null ? 'Tıkla = Ok konumu' : 'Aşağıdan bir ok seçin'}
+                                    </div>
+
+                                    {/* Feedback banner */}
+                                    {feedback && (
+                                        <div style={{
+                                            position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)',
+                                            background: feedback.color, color: 'white', padding: '6px 16px',
+                                            borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600',
+                                            pointerEvents: 'none', zIndex: 10,
+                                            animation: 'fadeIn 0.15s ease'
+                                        }}>
+                                            {feedback.text}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* View mode info */}
+                                {isViewMode && (
+                                    <div style={{
+                                        marginTop: '8px', padding: '8px 12px', background: 'rgba(59,130,246,0.06)',
+                                        border: '1px solid rgba(59,130,246,0.15)', borderRadius: '8px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                                    }}>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                            Ziyaretçi bu node'a girdiğinde bakacağı yön
+                                        </span>
+                                        <span style={{
+                                            fontSize: '0.75rem', fontFamily: 'monospace', fontWeight: '600',
+                                            background: 'var(--color-bg-card)', padding: '2px 8px', borderRadius: '4px'
+                                        }}>
+                                            {Math.round(((form.defaultYaw * 180 / Math.PI) % 360 + 360) % 360)}° / {Math.round(form.defaultPitch * 180 / Math.PI)}°
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Active toggle */}
-                        <div style={{ marginBottom: '20px' }}>
+                        <div style={{ marginBottom: '16px' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
                                 <input
                                     type="checkbox"
@@ -501,12 +728,12 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
                             </label>
                         </div>
 
-                        {/* Links section */}
+                        {/* ===== LINKS SECTION (Arrow mode content) ===== */}
                         <div style={{ marginBottom: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                                 <h3 style={{ margin: 0, fontSize: '1rem' }}>
-                                    <LinkIcon size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-                                    Bağlantılar
+                                    <Navigation size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                                    Yön Okları ({form.links.length})
                                 </h3>
                                 <button
                                     type="button"
@@ -515,107 +742,92 @@ const NodeModal = ({ node, allNodes, onSave, onClose }) => {
                                     style={{ padding: '4px 12px', fontSize: '0.8rem' }}
                                 >
                                     <Plus size={14} />
-                                    Bağlantı Ekle
+                                    Ok Ekle
                                 </button>
                             </div>
 
                             {form.links.length === 0 && (
-                                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '16px' }}>
-                                    Henüz bağlantı yok. Diğer nodelara ok yönü ekleyin.
+                                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', textAlign: 'center', padding: '12px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                                    Henüz yön oku yok. Diğer nodelara geçiş okları ekleyin.
                                 </p>
                             )}
 
                             {form.links.map((link, index) => {
+                                const isActive = activeLinkIndex === index && mode === MODES.ARROW;
                                 const yawDeg = Math.round(((link.yaw * 180 / Math.PI) % 360 + 360) % 360);
+                                const pitchDeg = Math.round(link.pitch * 180 / Math.PI);
+                                const targetNode = allNodes.find(n => n.nodeId === link.targetNodeId);
                                 return (
                                     <div key={index} style={{
-                                        border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-                                        padding: '12px', marginBottom: '8px', background: 'var(--color-bg-secondary)'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                            <div style={{ flex: 1 }}>
-                                                <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '2px' }}>
-                                                    Hedef Node
-                                                </label>
+                                        border: isActive ? '2px solid #34C759' : '1px solid var(--color-border)',
+                                        borderRadius: 'var(--radius-md)',
+                                        padding: isActive ? '11px' : '12px', marginBottom: '6px',
+                                        background: isActive ? 'rgba(52,199,89,0.04)' : 'var(--color-bg-secondary)',
+                                        cursor: 'pointer', transition: 'all 0.15s'
+                                    }}
+                                        onClick={() => selectLink(index)}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {/* Link number */}
+                                            <div style={{
+                                                width: '24px', height: '24px', borderRadius: '6px',
+                                                background: isActive ? '#34C759' : 'var(--color-bg-card)',
+                                                color: isActive ? 'white' : 'var(--color-text-muted)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: '0.7rem', fontWeight: '700', flexShrink: 0
+                                            }}>
+                                                {index + 1}
+                                            </div>
+
+                                            {/* Target selector */}
+                                            <div style={{ flex: 1 }} onClick={e => e.stopPropagation()}>
                                                 <select
                                                     value={link.targetNodeId}
                                                     onChange={e => updateLink(index, 'targetNodeId', e.target.value)}
                                                     style={{
-                                                        width: '100%', padding: '6px 10px', border: '1px solid var(--color-border)',
-                                                        borderRadius: 'var(--radius-sm)', fontSize: '0.85rem'
+                                                        width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)',
+                                                        borderRadius: 'var(--radius-sm)', fontSize: '0.8rem'
                                                     }}
                                                 >
-                                                    <option value="">Seçin...</option>
+                                                    <option value="">Hedef Node...</option>
                                                     {otherNodes.map(n => (
-                                                        <option key={n.nodeId} value={n.nodeId}>{n.name} ({n.nodeId})</option>
+                                                        <option key={n.nodeId} value={n.nodeId}>{n.name}</option>
                                                     ))}
                                                 </select>
                                             </div>
+
+                                            {/* Position badge */}
+                                            <span style={{
+                                                fontSize: '0.65rem', padding: '3px 6px', borderRadius: '4px',
+                                                background: 'var(--color-bg-card)', border: '1px solid var(--color-border)',
+                                                color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontFamily: 'monospace'
+                                            }}>
+                                                {yawDeg}°
+                                            </span>
+
+                                            {/* Delete */}
                                             <button
                                                 type="button"
-                                                onClick={() => removeLink(index)}
+                                                onClick={(e) => { e.stopPropagation(); removeLink(index); }}
                                                 style={{
-                                                    background: 'none', border: 'none', color: '#ef4444',
-                                                    cursor: 'pointer', padding: '4px', marginTop: '16px'
+                                                    background: 'none', border: 'none', cursor: 'pointer',
+                                                    color: '#ef4444', display: 'flex', alignItems: 'center', padding: '4px'
                                                 }}
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
 
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                                <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                                    Yaw (Ok Yönü)
-                                                </label>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: '600', minWidth: '50px', textAlign: 'right' }}>
-                                                    {yawDeg}°
-                                                </span>
+                                        {/* Active: instruction */}
+                                        {isActive && (
+                                            <div style={{
+                                                marginTop: '8px', fontSize: '0.75rem', color: '#34C759', fontWeight: '500',
+                                                display: 'flex', alignItems: 'center', gap: '4px'
+                                            }}>
+                                                <MousePointerClick size={12} />
+                                                Panoramada {targetNode?.name || 'hedef node'} yönüne tıklayın
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max="360"
-                                                    value={yawDeg}
-                                                    onChange={e => {
-                                                        const deg = parseInt(e.target.value);
-                                                        const rad = deg * Math.PI / 180;
-                                                        updateLink(index, 'yaw', rad);
-                                                    }}
-                                                    style={{ flex: 1, cursor: 'pointer' }}
-                                                />
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-                                                <span>0° Kuzey</span>
-                                                <span>90° Doğu</span>
-                                                <span>180° Güney</span>
-                                                <span>270° Batı</span>
-                                                <span>360°</span>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ marginTop: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                                <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                                    Pitch (Dikey Açı)
-                                                </label>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: '600', minWidth: '50px', textAlign: 'right' }}>
-                                                    {Math.round(link.pitch * 180 / Math.PI)}°
-                                                </span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="-90"
-                                                max="90"
-                                                value={Math.round(link.pitch * 180 / Math.PI)}
-                                                onChange={e => {
-                                                    const deg = parseInt(e.target.value);
-                                                    updateLink(index, 'pitch', deg * Math.PI / 180);
-                                                }}
-                                                style={{ width: '100%', cursor: 'pointer' }}
-                                            />
-                                        </div>
+                                        )}
                                     </div>
                                 );
                             })}
