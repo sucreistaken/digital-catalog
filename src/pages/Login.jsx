@@ -49,8 +49,7 @@ const Login = () => {
                     {/* Logo & Header */}
                     <div className="login-header">
                         <div className="login-logo">
-                            <span className="brand-free">free</span>
-                            <span className="brand-garden">garden</span>
+                            <span className="brand-free">Fabrikaa</span>
                         </div>
                         <h1>Admin Paneli</h1>
                         <p>Devam etmek için giriş yapın</p>
@@ -75,7 +74,7 @@ const Login = () => {
                                 id="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="admin@freegarden.com"
+                                placeholder="admin@fabrikaa.com"
                                 autoComplete="email"
                                 required
                                 disabled={loading}
@@ -126,7 +125,7 @@ const Login = () => {
 
                     {/* Footer */}
                     <div className="login-footer">
-                        <p>© 2026 FreeGarden. Tüm hakları saklıdır.</p>
+                        <p>&copy; 2026 Fabrikaa. Tüm hakları saklıdır.</p>
                     </div>
                 </div>
             </div>

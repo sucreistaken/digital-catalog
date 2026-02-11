@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Package, Folder, MessageSquare, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Package, Folder, MessageSquare, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe, ArrowLeftRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useBrand } from '../context/BrandContext';
+import { brandList, getBrand } from '../config/brands';
 import '../styles/layout.css';
 import WhatsAppButton from './WhatsAppButton';
-import logo from '../assets/freegarden-logo.png';
 
 // Language Switcher Component
 const LanguageSwitcher = () => {
@@ -40,11 +41,20 @@ const LanguageSwitcher = () => {
 // Public Layout
 const PublicLayout = ({ children }) => {
     const { t, language } = useLanguage();
+    const { brand, brandId, clearBrand } = useBrand();
     const location = useLocation();
+    const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
 
+    const otherBrand = brandList.find(b => b.id !== brandId);
+
+    const handleSwitchBrand = () => {
+        clearBrand();
+        navigate('/');
+    };
+
     const navLinks = [
-        { path: '/', label: t('home') },
+        { path: '/home', label: t('home') },
         { path: '/catalog', label: t('catalog') },
         { path: '/showroom', label: 'Showroom' },
         { path: '/certificates', label: 'Certificates' },
@@ -54,8 +64,14 @@ const PublicLayout = ({ children }) => {
     return (
         <div className="public-layout">
             <nav className="navbar">
-                <Link to="/" className="brand">
-                    <img src={logo} alt="FreeGarden" className="brand-logo" style={{ height: '60px' }} />
+                <Link to="/home" className="brand">
+                    {brand?.logo ? (
+                        <img src={brand.logo} alt={brand.name} className="brand-logo" style={{ height: '60px' }} />
+                    ) : (
+                        <span className="brand-text-logo" style={{ color: brand?.theme['--color-primary'] || '#1D1D1F', fontSize: '1.5rem', fontWeight: 700 }}>
+                            {brand?.name || 'Fabrikaa'}
+                        </span>
+                    )}
                 </Link>
 
                 <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
@@ -72,6 +88,10 @@ const PublicLayout = ({ children }) => {
                 </div>
 
                 <div className="nav-actions">
+                    <button className="brand-switch-nav" onClick={handleSwitchBrand}>
+                        <ArrowLeftRight size={14} />
+                        <span className="brand-switch-label">{otherBrand?.name}</span>
+                    </button>
                     <LanguageSwitcher />
                     <Link to="/admin/dashboard" className="btn btn-primary btn-sm">
                         {t('adminPanel')}
@@ -88,7 +108,13 @@ const PublicLayout = ({ children }) => {
                 <div className="footer-top container">
                     <div className="footer-brand-col">
                         <div className="footer-logo">
-                            <img src={logo} alt="FreeGarden" className="brand-logo" style={{ height: '60px' }} />
+                            {brand?.logo ? (
+                                <img src={brand.logo} alt={brand.name} className="brand-logo" style={{ height: '60px' }} />
+                            ) : (
+                                <span style={{ color: brand?.theme['--color-primary'] || '#fff', fontSize: '1.5rem', fontWeight: 700 }}>
+                                    {brand?.name || 'Fabrikaa'}
+                                </span>
+                            )}
                         </div>
                         <p className="footer-desc">
                             {language === 'tr'
@@ -138,8 +164,8 @@ const PublicLayout = ({ children }) => {
                             </button>
                         </form>
                         <div className="footer-contact-mini">
-                            <a href="mailto:info@freegarden.com">info@freegarden.com</a>
-                            <a href="tel:+905001234567">+90 500 123 45 67</a>
+                            <a href={`mailto:${brand?.email || 'info@freegarden.com'}`}>{brand?.email || 'info@freegarden.com'}</a>
+                            <a href={`tel:${brand?.phone || '+905001234567'}`}>{brand?.phone || '+90 500 123 45 67'}</a>
                         </div>
                     </div>
                 </div>
@@ -147,7 +173,7 @@ const PublicLayout = ({ children }) => {
                 <div className="footer-bottom-pro">
                     <div className="container footer-bottom-inner">
                         <div className="footer-copyright">
-                            <span>© 2026 FreeGarden. {t('allRightsReserved')}</span>
+                            <span>&copy; 2026 {brand?.name || 'Fabrikaa'}. {t('allRightsReserved')}</span>
                         </div>
                         <div className="footer-legal">
                             <a href="#">{language === 'tr' ? 'Gizlilik' : 'Privacy'}</a>
@@ -169,6 +195,7 @@ const AdminLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const { adminBrand, adminBrandId, setAdminBrand } = useBrand();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const handleLogout = () => {
@@ -192,10 +219,30 @@ const AdminLayout = ({ children }) => {
         <div className="admin-layout">
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-brand">
-                    <Link to="/" className="brand">
-                        <img src={logo} alt="FreeGarden" className="brand-logo" style={{ height: '40px' }} />
+                    <Link to="/home" className="brand">
+                        {adminBrand?.logo ? (
+                            <img src={adminBrand.logo} alt={adminBrand.name} className="brand-logo" style={{ height: '40px' }} />
+                        ) : (
+                            <span style={{ color: adminBrand?.theme['--color-primary'] || '#1D1D1F', fontSize: '1.25rem', fontWeight: 700 }}>
+                                {adminBrand?.name || 'Fabrikaa'}
+                            </span>
+                        )}
                     </Link>
                     <span className="admin-badge">Admin</span>
+                </div>
+
+                {/* Brand Switcher */}
+                <div className="sidebar-brand-switcher">
+                    {brandList.map(b => (
+                        <button
+                            key={b.id}
+                            className={`brand-switch-btn ${adminBrandId === b.id ? 'active' : ''}`}
+                            onClick={() => setAdminBrand(b.id)}
+                            style={{ '--btn-accent': b.theme['--color-primary'] }}
+                        >
+                            {b.name}
+                        </button>
+                    ))}
                 </div>
 
                 <nav className="sidebar-nav">

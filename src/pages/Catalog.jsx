@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2, Copy, Check, Package, Layers, Hash, Droplets, ChevronDown, Filter } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useBrand } from '../context/BrandContext';
 import { colors as staticColors, materials } from '../data/products';
 import { productsApi, categoriesApi, colorsApi } from '../utils/api';
 import './Catalog.css';
@@ -329,6 +330,7 @@ const SkeletonCard = () => (
 
 const Catalog = () => {
     const { t, language } = useLanguage();
+    const { brand } = useBrand();
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -344,7 +346,7 @@ const Catalog = () => {
         loadProducts();
         loadCategories();
         loadColors();
-    }, []);
+    }, [brand?.id]);
 
     // Lock body scroll when modal is open
     useEffect(() => {
@@ -361,7 +363,7 @@ const Catalog = () => {
     const loadProducts = async () => {
         try {
             setLoading(true);
-            const data = await productsApi.getAll();
+            const data = await productsApi.getAll(brand?.id);
             setProducts(data);
         } catch (err) {
             console.error('API Error:', err);
@@ -373,7 +375,7 @@ const Catalog = () => {
 
     const loadCategories = async () => {
         try {
-            const data = await categoriesApi.getAll();
+            const data = await categoriesApi.getAll(brand?.id);
             setCategories(data);
         } catch (err) {
             console.error('Kategoriler yüklenemedi:', err);
@@ -417,9 +419,19 @@ const Catalog = () => {
         window.location.href = `/quote?product=${product._id || product.id}`;
     };
 
+    const catalogContentRef = React.useRef(null);
     const scrollContainerRef = React.useRef(null);
     const [showLeftScroll, setShowLeftScroll] = useState(false);
     const [showRightScroll, setShowRightScroll] = useState(false);
+
+    // Auto-scroll to products on mobile/tablet
+    useEffect(() => {
+        if (!loading && catalogContentRef.current && window.innerWidth <= 900) {
+            setTimeout(() => {
+                catalogContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        }
+    }, [loading]);
 
     const checkScroll = () => {
         if (scrollContainerRef.current) {
@@ -525,7 +537,7 @@ const Catalog = () => {
                 </aside>
 
                 {/* Products Grid */}
-                <div className="catalog-content">
+                <div className="catalog-content" ref={catalogContentRef}>
                     {loading ? (
                         <>
                             <div className="content-header">

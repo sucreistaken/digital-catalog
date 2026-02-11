@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema({
+    brand: { type: String, enum: ['freegarden', 'fatihplastik'], default: 'freegarden', index: true },
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     nameTr: { type: String },

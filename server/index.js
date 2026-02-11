@@ -63,8 +63,24 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Migrate existing data: set brand to 'freegarden' where missing
+const migrateExistingData = async () => {
+    try {
+        const Product = require('./models/Product');
+        const Category = require('./models/Category');
+        const pResult = await Product.updateMany({ brand: { $exists: false } }, { $set: { brand: 'freegarden' } });
+        const cResult = await Category.updateMany({ brand: { $exists: false } }, { $set: { brand: 'freegarden' } });
+        if (pResult.modifiedCount > 0 || cResult.modifiedCount > 0) {
+            console.log(`✅ Brand migration: ${pResult.modifiedCount} products, ${cResult.modifiedCount} categories updated`);
+        }
+    } catch (err) {
+        console.error('Brand migration error:', err.message);
+    }
+};
+
 // Start server
-connectDB().then(() => {
+connectDB().then(async () => {
+    await migrateExistingData();
     app.listen(PORT, () => {
         console.log(`🚀 Server çalışıyor: http://localhost:${PORT}`);
     });

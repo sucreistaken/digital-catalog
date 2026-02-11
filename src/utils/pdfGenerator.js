@@ -1,8 +1,8 @@
 import jsPDF from 'jspdf';
 import { colors as staticColors } from '../data/products';
 
-// --- Theme (matches site: Apple-inspired FreeGarden) ---
-const THEME = {
+// --- Default Theme (matches site: Apple-inspired FreeGarden) ---
+const DEFAULT_THEME = {
     green:      [52, 199, 89],
     greenDark:  [40, 167, 69],
     greenLight: [240, 253, 244],
@@ -16,6 +16,9 @@ const THEME = {
     cardBg:     [255, 255, 255],
     pageBg:     [251, 251, 253],
 };
+
+// Will be set per-invocation based on brandConfig
+let THEME = { ...DEFAULT_THEME };
 
 // --- Helpers ---
 
@@ -117,8 +120,17 @@ const hexToRgb = (hex) => {
 // --- PDF Generation ---
 // onProgress(percent: 0-100) callback for real progress tracking
 
-export const generateProductCatalog = async (products, categories, dbColors = [], onProgress) => {
+export const generateProductCatalog = async (products, categories, dbColors = [], onProgress, brandConfig = null) => {
     try {
+        // Apply brand theme
+        const brandName = brandConfig?.name || 'FreeGarden';
+        const brandWebsite = brandConfig?.website || 'www.freegarden.com';
+        if (brandConfig?.pdfTheme?.primary) {
+            THEME = { ...DEFAULT_THEME, green: brandConfig.pdfTheme.primary };
+        } else {
+            THEME = { ...DEFAULT_THEME };
+        }
+
         const report = (pct) => { if (onProgress) onProgress(Math.min(Math.round(pct), 100)); };
 
         report(2);
@@ -188,7 +200,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
         doc.setFont(font, 'bold');
         doc.setFontSize(42);
         doc.setTextColor(...THEME.white);
-        doc.text('FreeGarden', PW / 2, 80, { align: 'center' });
+        doc.text(brandName, PW / 2, 80, { align: 'center' });
 
         doc.setFont(font, 'normal');
         doc.setFontSize(14);
@@ -246,7 +258,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
 
         doc.setFontSize(10);
         doc.setTextColor(...THEME.green);
-        doc.text('www.freegarden.com', PW / 2, PH - 18, { align: 'center' });
+        doc.text(brandWebsite, PW / 2, PH - 18, { align: 'center' });
 
         report(82);
 
@@ -255,7 +267,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
         // ===========================
         doc.addPage();
         drawPageBackground(doc, PW, PH);
-        drawPageHeader(doc, font, PW, ML, 'İçindekiler');
+        drawPageHeader(doc, font, PW, ML, 'İçindekiler', brandName);
 
         let tocY = 55;
         const activeCats = categories.filter(cat =>
@@ -348,7 +360,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
                 if (posInPage >= maxOnThisPage) {
                     doc.addPage();
                     drawPageBackground(doc, PW, PH);
-                    drawPageHeader(doc, font, PW, ML, catName);
+                    drawPageHeader(doc, font, PW, ML, catName, brandName);
                     posInPage = 0;
                     pageStartY = CONT_PAGE_START_Y;
                     maxOnThisPage = contPageCards;
@@ -376,7 +388,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
         // ===========================
         doc.addPage();
         drawPageBackground(doc, PW, PH);
-        drawPageHeader(doc, font, PW, ML, 'Ürün Özet Tablosu');
+        drawPageHeader(doc, font, PW, ML, 'Ürün Özet Tablosu', brandName);
 
         const { default: autoTable } = await import('jspdf-autotable');
 
@@ -461,12 +473,12 @@ export const generateProductCatalog = async (products, categories, dbColors = []
             doc.setFont(font, 'bold');
             doc.setFontSize(7);
             doc.setTextColor(...THEME.green);
-            doc.text('FreeGarden', ML, PH - 10);
+            doc.text(brandName, ML, PH - 10);
 
             doc.setFont(font, 'normal');
             doc.setFontSize(7);
             doc.setTextColor(...THEME.muted);
-            doc.text('www.freegarden.com', PW / 2, PH - 10, { align: 'center' });
+            doc.text(brandWebsite, PW / 2, PH - 10, { align: 'center' });
 
             doc.setFont(font, 'normal');
             doc.setFontSize(7);
@@ -482,7 +494,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'FreeGarden_Urun_Katalogu.pdf';
+            a.download = `${brandName}_Urun_Katalogu.pdf`;
             document.body.appendChild(a);
             a.click();
             setTimeout(() => {
@@ -621,7 +633,7 @@ function drawPageBackground(doc, PW, PH) {
     doc.rect(0, 0, PW, PH, 'F');
 }
 
-function drawPageHeader(doc, font, PW, ML, title) {
+function drawPageHeader(doc, font, PW, ML, title, headerBrandName) {
     doc.setFillColor(...THEME.green);
     doc.rect(0, 0, PW, 3, 'F');
 
@@ -638,5 +650,5 @@ function drawPageHeader(doc, font, PW, ML, title) {
     doc.setFont(font, 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...THEME.muted);
-    doc.text('FreeGarden', PW - ML, 25, { align: 'right' });
+    doc.text(headerBrandName || 'FreeGarden', PW - ML, 25, { align: 'right' });
 }

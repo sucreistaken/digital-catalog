@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Package, Loader2, RefreshCw, X, Save, GripVertical } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useBrand } from '../../context/BrandContext';
 import { categoriesApi, productsApi } from '../../utils/api';
 import '../Dashboard.css';
 
 const Categories = () => {
     const { t, language } = useLanguage();
+    const { adminBrandId } = useBrand();
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -41,15 +43,15 @@ const Categories = () => {
     // Load categories and products from API
     useEffect(() => {
         loadData();
-    }, []);
+    }, [adminBrandId]);
 
     const loadData = async () => {
         try {
             setLoading(true);
             setError(null);
             const [categoriesData, productsData] = await Promise.all([
-                categoriesApi.getAll(),
-                productsApi.getAll()
+                categoriesApi.getAll(adminBrandId),
+                productsApi.getAll(adminBrandId)
             ]);
             setCategories(categoriesData);
             setProducts(productsData);
@@ -127,7 +129,7 @@ const Categories = () => {
         try {
             setIsSavingOrder(true);
             const orderedIds = newCategories.map(c => c.id);
-            await categoriesApi.reorder(orderedIds);
+            await categoriesApi.reorder(orderedIds, adminBrandId);
             showToast('Sıralama güncellendi');
         } catch (err) {
             console.error('Reorder error:', err);
@@ -142,7 +144,7 @@ const Categories = () => {
     const handleReset = async () => {
         if (confirm('Tüm kategorileri varsayılana sıfırlamak istiyor musunuz?')) {
             try {
-                const result = await categoriesApi.reset();
+                const result = await categoriesApi.reset(adminBrandId);
                 setCategories(result.categories);
                 showToast('Kategoriler sıfırlandı');
             } catch (err) {
@@ -204,7 +206,7 @@ const Categories = () => {
                 showToast('Kategori güncellendi');
             } else {
                 // Create new
-                const created = await categoriesApi.create(formData);
+                const created = await categoriesApi.create({ ...formData, brand: adminBrandId });
                 setCategories([...categories, created]);
                 showToast('Kategori eklendi');
             }

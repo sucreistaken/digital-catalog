@@ -6,13 +6,13 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('freegarden_token'));
+    const [token, setToken] = useState(localStorage.getItem('fabrikaa_token'));
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     // Check if user is authenticated on mount
     const checkAuth = useCallback(async () => {
-        const storedToken = localStorage.getItem('freegarden_token');
+        const storedToken = localStorage.getItem('fabrikaa_token');
 
         if (!storedToken) {
             setLoading(false);
@@ -32,13 +32,13 @@ export const AuthProvider = ({ children }) => {
                 setToken(storedToken);
             } else {
                 // Token invalid, clear it
-                localStorage.removeItem('freegarden_token');
+                localStorage.removeItem('fabrikaa_token');
                 setToken(null);
                 setUser(null);
             }
         } catch (err) {
             console.error('Auth check failed:', err);
-            localStorage.removeItem('freegarden_token');
+            localStorage.removeItem('fabrikaa_token');
             setToken(null);
             setUser(null);
         } finally {

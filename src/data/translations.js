@@ -24,7 +24,7 @@ export const translations = {
         heroSubtitle: 'Leading manufacturer of sustainable plastic products for home, garden, and industry. Based in Adana, serving the world.',
         exploreCatalog: 'Explore Catalog',
         contactSales: 'Contact Sales',
-        whyChooseUs: 'Why Choose FreeGarden?',
+        whyChooseUs: 'Why Choose Us?',
         builtWithQuality: 'Built with quality, designed for performance',
 
         // Features
@@ -124,7 +124,7 @@ export const translations = {
         heroSubtitle: 'Ev, bahçe ve endüstri için sürdürülebilir plastik ürünlerin lider üreticisi. Adana merkezli, dünyaya hizmet veriyor.',
         exploreCatalog: 'Kataloğu Keşfet',
         contactSales: 'Satış ile İletişim',
-        whyChooseUs: 'Neden FreeGarden?',
+        whyChooseUs: 'Neden Bizi Seçmelisiniz?',
         builtWithQuality: 'Kalite ile üretildi, performans için tasarlandı',
 
         // Features
@@ -224,7 +224,7 @@ export const translations = {
         heroSubtitle: 'الشركة الرائدة في تصنيع المنتجات البلاستيكية المستدامة للمنزل والحديقة والصناعة. مقرها أضنة، تخدم العالم.',
         exploreCatalog: 'استكشف الكتالوج',
         contactSales: 'اتصل بالمبيعات',
-        whyChooseUs: 'لماذا تختار فري جاردن؟',
+        whyChooseUs: 'لماذا تختارنا؟',
         builtWithQuality: 'صُنعت بجودة، مصممة للأداء',
 
         // Features
@@ -318,7 +318,7 @@ export const translations = {
         heroSubtitle: 'Führender Hersteller nachhaltiger Kunststoffprodukte für Haus, Garten und Industrie. Sitz in Adana, weltweit tätig.',
         exploreCatalog: 'Katalog erkunden',
         contactSales: 'Vertrieb kontaktieren',
-        whyChooseUs: 'Warum FreeGarden wählen?',
+        whyChooseUs: 'Warum uns wählen?',
         builtWithQuality: 'Mit Qualität gebaut, für Leistung konzipiert',
 
         // Features
@@ -412,7 +412,7 @@ export const translations = {
         heroSubtitle: '家庭、花园和工业可持续塑料产品的领先制造商。总部位于阿达纳，服务全球。',
         exploreCatalog: '浏览目录',
         contactSales: '联系销售',
-        whyChooseUs: '为什么选择 FreeGarden？',
+        whyChooseUs: '为什么选择我们？',
         builtWithQuality: '品质铸就，专为性能设计',
 
         // Features

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Send, Phone, MessageCircle, Mail, MapPin, CheckCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useBrand } from '../context/BrandContext';
 import { productsApi, quotesApi } from '../utils/api';
 import './Quote.css';
 
 const Quote = () => {
     const { t, language } = useLanguage();
+    const { brand } = useBrand();
     const [searchParams] = useSearchParams();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -26,7 +28,7 @@ const Quote = () => {
     useEffect(() => {
         const loadProducts = async () => {
             try {
-                const data = await productsApi.getAll();
+                const data = await productsApi.getAll(brand?.id);
                 setProducts(data);
             } catch (err) {
                 console.error('Error loading products for quote form:', err);
@@ -34,7 +36,7 @@ const Quote = () => {
             }
         };
         loadProducts();
-    }, []);
+    }, [brand?.id]);
 
     // Pre-select product if coming from catalog
     useEffect(() => {
@@ -238,13 +240,13 @@ const Quote = () => {
                                 </div>
                             </a>
 
-                            <a href="mailto:info@freegarden.com" className="contact-card">
+                            <a href={`mailto:${brand?.email || 'info@freegarden.com'}`} className="contact-card">
                                 <div className="contact-icon">
                                     <Mail size={24} />
                                 </div>
                                 <div className="contact-info">
                                     <span className="contact-label">{t('emailUs')}</span>
-                                    <span className="contact-value">info@freegarden.com</span>
+                                    <span className="contact-value">{brand?.email || 'info@freegarden.com'}</span>
                                 </div>
                             </a>
 

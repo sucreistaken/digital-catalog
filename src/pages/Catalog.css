@@ -245,12 +245,17 @@
     color: #1d1d1f;
 }
 
-/* Responsive */
+/* Responsive - Tablet */
 @media (max-width: 900px) {
     .catalog-main {
         flex-direction: column;
-        gap: 24px;
-        padding-top: 24px;
+        gap: 16px;
+        padding-top: 16px;
+    }
+
+    .catalog-main.container {
+        padding-left: 16px;
+        padding-right: 16px;
     }
 
     .catalog-sidebar {
@@ -259,57 +264,135 @@
         max-height: none;
     }
 
+    .sidebar-subtitle {
+        font-size: 0.8rem;
+        margin-bottom: 10px;
+    }
+
     .category-vertical-list {
         display: flex;
+        flex-direction: row;
         overflow-x: auto;
         padding-bottom: 8px;
         gap: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .category-vertical-list::-webkit-scrollbar {
+        display: none;
     }
 
     .cat-row {
         flex-shrink: 0;
         border: 1px solid #e5e5e5;
         white-space: nowrap;
+        padding: 8px 14px;
+        border-radius: 20px;
     }
 
     .cat-row:hover {
         background: white;
-        border-color: #34C759;
+        border-color: var(--color-primary, #34C759);
     }
 
     .cat-row.active {
-        background: #34C759;
+        background: var(--color-primary, #34C759);
         color: white;
-        border-color: #34C759;
+        border-color: var(--color-primary, #34C759);
     }
 
     .cat-row.active .cat-count {
         background: white;
-        color: #34C759;
+        color: var(--color-primary, #34C759);
     }
 
     .sidebar-section {
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
 
     .sidebar-header,
     .text-overline {
         display: none;
     }
+
+    .search-input-wrapper input {
+        padding: 10px 32px 10px 36px;
+        font-size: 16px; /* Prevents iOS zoom */
+    }
 }
 
+/* Responsive - Mobile */
 @media (max-width: 640px) {
-    .products-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+    .catalog {
+        padding-bottom: 40px;
     }
 
-    .category-vertical-list {
+    .catalog-main.container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .products-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .product-info {
+        padding: 12px;
+        gap: 4px;
+    }
+
+    .product-info h3 {
+        font-size: 0.9rem;
+    }
+
+    .product-sku {
+        font-size: 0.65rem;
+    }
+
+    .product-specs-mini {
+        font-size: 0.75rem;
+    }
+
+    .product-image {
+        padding: 12px;
     }
 
     .section-title {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
+    }
+
+    .results-text {
+        font-size: 0.85rem;
+    }
+
+    .content-header {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+
+    .catalog-category-section {
+        margin-bottom: 28px;
+    }
+
+    .category-section-header {
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+    }
+
+    .mini-swatch {
+        width: 12px;
+        height: 12px;
+    }
+
+    .product-colors-mini {
+        margin-top: 8px;
+        gap: 4px;
+    }
+
+    .more-colors {
+        font-size: 0.65rem;
     }
 }
 
@@ -1379,13 +1462,19 @@
     text-transform: uppercase;
 }
 
-/* Responsive */
+/* Responsive - Modal */
 @media (max-width: 768px) {
+    .product-modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
     .product-modal {
         flex-direction: column;
         height: auto;
-        max-height: 90vh;
+        max-height: 95vh;
         overflow-y: auto;
+        border-radius: 16px 16px 0 0;
     }
 
     .modal-content {
@@ -1393,20 +1482,47 @@
     }
 
     .modal-image {
-        min-height: 250px;
-        padding: 20px;
+        min-height: 200px;
+        padding: 16px;
     }
 
     .modal-image img {
-        max-height: 200px;
+        max-height: 180px;
     }
 
     .modal-details {
-        padding: 24px;
+        padding: 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .modal-specs-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 
     .modal-actions {
         flex-direction: column;
+    }
+
+    .modal-actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-close {
+        top: 10px;
+        right: 10px;
+    }
+
+    .color-chip {
+        width: 32px;
+        height: 32px;
+    }
+
+    .color-chips {
+        gap: 8px;
     }
 }
 

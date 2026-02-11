@@ -6,8 +6,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 // Products API
 export const productsApi = {
     // Get all products
-    getAll: async () => {
-        const res = await fetch(`${API_BASE_URL}/products`);
+    getAll: async (brand) => {
+        const params = brand ? `?brand=${brand}` : '';
+        const res = await fetch(`${API_BASE_URL}/products${params}`);
         if (!res.ok) throw new Error('Ürünler yüklenemedi');
         return res.json();
     },
@@ -94,22 +95,22 @@ export const productsApi = {
     },
 
     // Reorder products (drag & drop)
-    reorder: async (orderedIds) => {
+    reorder: async (orderedIds, brand) => {
         const res = await fetch(`${API_BASE_URL}/products/reorder/bulk`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderedIds })
+            body: JSON.stringify({ orderedIds, brand })
         });
         if (!res.ok) throw new Error('Sıralama güncellenemedi');
         return res.json();
     },
 
     // Reorder products within a category (drag & drop)
-    reorderByCategory: async (categoryId, orderedIds) => {
+    reorderByCategory: async (categoryId, orderedIds, brand) => {
         const res = await fetch(`${API_BASE_URL}/products/reorder/category`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ categoryId, orderedIds })
+            body: JSON.stringify({ categoryId, orderedIds, brand })
         });
         if (!res.ok) throw new Error('Kategori sıralaması güncellenemedi');
         return res.json();
@@ -161,11 +162,11 @@ export const productsApi = {
     },
 
     // Bulk update products
-    bulkUpdate: async (ids, updates) => {
+    bulkUpdate: async (ids, updates, brand) => {
         const res = await fetch(`${API_BASE_URL}/products/bulk/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids, updates })
+            body: JSON.stringify({ ids, updates, brand })
         });
         if (!res.ok) throw new Error('Toplu güncelleme başarısız');
         return res.json();
@@ -210,8 +211,9 @@ export const colorsApi = {
 // Categories API
 export const categoriesApi = {
     // Get all categories
-    getAll: async () => {
-        const res = await fetch(`${API_BASE_URL}/categories`);
+    getAll: async (brand) => {
+        const params = brand ? `?brand=${brand}` : '';
+        const res = await fetch(`${API_BASE_URL}/categories${params}`);
         if (!res.ok) throw new Error('Kategoriler yüklenemedi');
         return res.json();
     },
@@ -255,20 +257,22 @@ export const categoriesApi = {
     },
 
     // Reset to defaults
-    reset: async () => {
+    reset: async (brand) => {
         const res = await fetch(`${API_BASE_URL}/categories/reset`, {
-            method: 'POST'
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brand })
         });
         if (!res.ok) throw new Error('Kategoriler sıfırlanamadı');
         return res.json();
     },
 
     // Reorder categories (drag & drop)
-    reorder: async (orderedIds) => {
+    reorder: async (orderedIds, brand) => {
         const res = await fetch(`${API_BASE_URL}/categories/reorder/bulk`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderedIds })
+            body: JSON.stringify({ orderedIds, brand })
         });
         if (!res.ok) throw new Error('Sıralama güncellenemedi');
         return res.json();

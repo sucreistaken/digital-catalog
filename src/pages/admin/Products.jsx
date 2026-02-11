@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, EyeOff, Filter, Download, Loader2, GripVertical, X, FileText, CheckCircle, FileSpreadsheet, Copy, Check, Image, Layers, List, Package, ToggleLeft, ToggleRight, ChevronUp, ChevronDown, Database, ChevronLeft, ChevronRight, Palette, RotateCcw, Save, Zap } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useBrand } from '../../context/BrandContext';
 import { products as defaultProducts, materials, colors } from '../../data/products';
 import { generateProductCatalog } from '../../utils/pdfGenerator';
 import { productsApi, categoriesApi, colorsApi } from '../../utils/api';
@@ -10,6 +11,7 @@ import '../Dashboard.css';
 
 const Products = () => {
     const { t, language } = useLanguage();
+    const { adminBrandId, adminBrand } = useBrand();
 
     // Original State
     const [searchQuery, setSearchQuery] = useState('');
@@ -92,13 +94,13 @@ const Products = () => {
         loadProducts();
         loadCategories();
         loadColors();
-    }, []);
+    }, [adminBrandId]);
 
     const loadProducts = async () => {
         try {
             setLoading(true);
             setError(null);
-            const data = await productsApi.getAll();
+            const data = await productsApi.getAll(adminBrandId);
             setProducts(data.length > 0 ? data : defaultProducts);
         } catch (err) {
             console.error('API Error:', err);
@@ -173,7 +175,7 @@ const Products = () => {
 
     const loadCategories = async () => {
         try {
-            const data = await categoriesApi.getAll();
+            const data = await categoriesApi.getAll(adminBrandId);
             setCategories(data);
         } catch (err) {
             console.error('Kategoriler yüklenemedi:', err);
@@ -329,7 +331,7 @@ const Products = () => {
             const exportProducts = filteredProducts.filter(p => !p.hiddenFromCatalog);
             await generateProductCatalog(exportProducts, categories, dbColors, (pct) => {
                 setExportProgress(pct);
-            });
+            }, adminBrand);
 
             setExportProgress(100);
             setExportComplete(true);
@@ -371,6 +373,10 @@ const Products = () => {
 
     const handleSaveProduct = async (productData) => {
         try {
+            // Attach brand to new products
+            if (!editingProduct) {
+                productData.brand = adminBrandId;
+            }
             if (editingProduct) {
                 // Update existing product
                 const updated = await productsApi.update(editingProduct._id || editingProduct.id, productData);
@@ -499,7 +505,7 @@ const Products = () => {
             try {
                 setIsSavingOrder(true);
                 const orderedIds = newCategoryProducts.map(p => p._id || p.id);
-                await productsApi.reorderByCategory(categoryId, orderedIds);
+                await productsApi.reorderByCategory(categoryId, orderedIds, adminBrandId);
                 showToast('Kategori sıralaması güncellendi');
             } catch (err) {
                 console.error('Category reorder error:', err);
@@ -524,7 +530,7 @@ const Products = () => {
             try {
                 setIsSavingOrder(true);
                 const orderedIds = newProducts.map(p => p._id || p.id);
-                await productsApi.reorder(orderedIds);
+                await productsApi.reorder(orderedIds, adminBrandId);
                 showToast('Sıralama güncellendi');
             } catch (err) {
                 console.error('Reorder error:', err);
@@ -645,7 +651,7 @@ const Products = () => {
     const handleBulkCategoryChange = async (categoryId) => {
         try {
             const ids = [...selectedIds];
-            const updated = await productsApi.bulkUpdate(ids, { category: categoryId });
+            const updated = await productsApi.bulkUpdate(ids, { category: categoryId }, adminBrandId);
             setProducts(updated);
             showToast(`${ids.length} ürünün kategorisi değiştirildi`);
             clearSelection();
@@ -658,7 +664,7 @@ const Products = () => {
     const handleBulkScaleApply = async () => {
         try {
             const ids = [...selectedIds];
-            const updated = await productsApi.bulkUpdate(ids, { imageScale: bulkScaleValue });
+            const updated = await productsApi.bulkUpdate(ids, { imageScale: bulkScaleValue }, adminBrandId);
             setProducts(updated);
             showToast(`${ids.length} ürünün ölçeği %${bulkScaleValue} olarak güncellendi`);
             setShowBulkScale(false);
@@ -672,7 +678,7 @@ const Products = () => {
     const handleBulkStockToggle = async (inStock) => {
         try {
             const ids = [...selectedIds];
-            const updated = await productsApi.bulkUpdate(ids, { inStock });
+            const updated = await productsApi.bulkUpdate(ids, { inStock }, adminBrandId);
             setProducts(updated);
             showToast(`${ids.length} ürün ${inStock ? 'stokta' : 'tükendi'} olarak güncellendi`);
             clearSelection();
@@ -699,7 +705,7 @@ const Products = () => {
     const handleBulkVisibilityToggle = async (hidden) => {
         try {
             const ids = [...selectedIds];
-            const updated = await productsApi.bulkUpdate(ids, { hiddenFromCatalog: hidden });
+            const updated = await productsApi.bulkUpdate(ids, { hiddenFromCatalog: hidden }, adminBrandId);
             setProducts(updated);
             showToast(`${ids.length} ürün ${hidden ? 'gizlendi' : 'gösterildi'}`);
             clearSelection();

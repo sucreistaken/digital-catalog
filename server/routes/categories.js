@@ -4,22 +4,27 @@ const Category = require('../models/Category');
 
 // Default categories to seed if none exist
 const defaultCategories = [
-    { id: 'furniture', name: 'Furniture', nameAr: 'أثاث', nameDe: 'Möbel', nameZh: '家具', nameTr: 'Mobilya', order: 1 },
-    { id: 'garden', name: 'Garden', nameAr: 'حديقة', nameDe: 'Garten', nameZh: '花园', nameTr: 'Bahçe', order: 2 },
-    { id: 'storage', name: 'Storage', nameAr: 'تخزين', nameDe: 'Lagerung', nameZh: '存储', nameTr: 'Depolama', order: 3 },
-    { id: 'industrial', name: 'Industrial', nameAr: 'صناعي', nameDe: 'Industrie', nameZh: '工业', nameTr: 'Endüstriyel', order: 4 },
-    { id: 'kids', name: 'Kids', nameAr: 'أطفال', nameDe: 'Kinder', nameZh: '儿童', nameTr: 'Çocuk', order: 5 },
+    { id: 'furniture', name: 'Furniture', nameAr: 'أثاث', nameDe: 'Möbel', nameZh: '家具', nameTr: 'Mobilya', order: 1, brand: 'freegarden' },
+    { id: 'garden', name: 'Garden', nameAr: 'حديقة', nameDe: 'Garten', nameZh: '花园', nameTr: 'Bahçe', order: 2, brand: 'freegarden' },
+    { id: 'storage', name: 'Storage', nameAr: 'تخزين', nameDe: 'Lagerung', nameZh: '存储', nameTr: 'Depolama', order: 3, brand: 'freegarden' },
+    { id: 'industrial', name: 'Industrial', nameAr: 'صناعي', nameDe: 'Industrie', nameZh: '工业', nameTr: 'Endüstriyel', order: 4, brand: 'freegarden' },
+    { id: 'kids', name: 'Kids', nameAr: 'أطفال', nameDe: 'Kinder', nameZh: '儿童', nameTr: 'Çocuk', order: 5, brand: 'freegarden' },
 ];
 
 // GET all categories
 router.get('/', async (req, res) => {
     try {
-        let categories = await Category.find().sort({ order: 1 });
+        const filter = {};
+        if (req.query.brand) {
+            filter.brand = req.query.brand;
+        }
 
-        // If no categories exist, seed with defaults
-        if (categories.length === 0) {
+        let categories = await Category.find(filter).sort({ order: 1 });
+
+        // If no categories exist for this brand, seed with defaults
+        if (categories.length === 0 && (!req.query.brand || req.query.brand === 'freegarden')) {
             await Category.insertMany(defaultCategories);
-            categories = await Category.find().sort({ order: 1 });
+            categories = await Category.find(filter).sort({ order: 1 });
         }
 
         res.json(categories);
@@ -85,7 +90,7 @@ router.delete('/:id', async (req, res) => {
 // PUT reorder categories (drag & drop)
 router.put('/reorder/bulk', async (req, res) => {
     try {
-        const { orderedIds } = req.body; // Array of category IDs in new order
+        const { orderedIds, brand } = req.body;
 
         if (!orderedIds || !Array.isArray(orderedIds)) {
             return res.status(400).json({ error: 'orderedIds array gerekli' });
@@ -102,20 +107,25 @@ router.put('/reorder/bulk', async (req, res) => {
 
         await Promise.all(updatePromises);
 
-        // Return updated categories
-        const categories = await Category.find().sort({ order: 1 });
+        // Return only categories for the specified brand
+        const filter = brand ? { brand } : {};
+        const categories = await Category.find(filter).sort({ order: 1 });
         res.json(categories);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// POST reset to defaults
+// POST reset to defaults (brand-aware)
 router.post('/reset', async (req, res) => {
     try {
-        await Category.deleteMany({});
-        await Category.insertMany(defaultCategories);
-        const categories = await Category.find().sort({ order: 1 });
+        const brand = req.body.brand || 'freegarden';
+        // Only delete categories for the specified brand
+        await Category.deleteMany({ brand });
+        if (brand === 'freegarden') {
+            await Category.insertMany(defaultCategories);
+        }
+        const categories = await Category.find({ brand }).sort({ order: 1 });
         res.json({ message: 'Kategoriler sıfırlandı', categories });
     } catch (err) {
         res.status(500).json({ error: err.message });

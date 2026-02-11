@@ -5,12 +5,12 @@ const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
     const [language, setLanguage] = useState(() => {
-        const saved = localStorage.getItem('freegarden-language');
+        const saved = localStorage.getItem('fabrikaa-language');
         return saved || 'en';
     });
 
     useEffect(() => {
-        localStorage.setItem('freegarden-language', language);
+        localStorage.setItem('fabrikaa-language', language);
         // Set document direction for RTL languages
         const lang = languages.find(l => l.code === language);
         document.documentElement.dir = lang?.dir || 'ltr';

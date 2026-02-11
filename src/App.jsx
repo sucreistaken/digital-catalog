@@ -1,8 +1,10 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { useBrand } from './context/BrandContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import BrandSelection from './pages/BrandSelection';
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import Quote from './pages/Quote';
@@ -20,16 +22,28 @@ import Settings from './pages/admin/Settings';
 import SiteContent from './pages/admin/SiteContent';
 import ShowroomTour from './pages/admin/ShowroomTour';
 
+// BrandGuard: redirects to brand selection if no brand is chosen
+const BrandGuard = ({ children }) => {
+  const { brandId } = useBrand();
+  if (!brandId) return <Navigate to="/" replace />;
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Layout><Home /></Layout>} />
-        <Route path="/catalog" element={<Layout><Catalog /></Layout>} />
-        <Route path="/quote" element={<Layout><Quote /></Layout>} />
-        <Route path="/contact" element={<Layout><Contact /></Layout>} />
-        <Route path="/certificates" element={<Layout><Certificates /></Layout>} />
+        {/* Brand Selection */}
+        <Route path="/" element={<BrandSelection />} />
+
+        {/* Public Routes (require brand) */}
+        <Route path="/home" element={<BrandGuard><Layout><Home /></Layout></BrandGuard>} />
+        <Route path="/catalog" element={<BrandGuard><Layout><Catalog /></Layout></BrandGuard>} />
+        <Route path="/quote" element={<BrandGuard><Layout><Quote /></Layout></BrandGuard>} />
+        <Route path="/contact" element={<BrandGuard><Layout><Contact /></Layout></BrandGuard>} />
+        <Route path="/certificates" element={<BrandGuard><Layout><Certificates /></Layout></BrandGuard>} />
+
+        {/* Showroom - shared, no brand guard */}
         <Route path="/showroom" element={<Showroom />} />
 
         {/* Login Route */}

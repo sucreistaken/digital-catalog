@@ -36,7 +36,7 @@
 .decoration-circle.circle-1 {
     width: 400px;
     height: 400px;
-    background: rgba(52, 199, 89, 0.15);
+    background: var(--color-primary-light, rgba(52, 199, 89, 0.15));
     top: -100px;
     right: -100px;
 }
@@ -52,7 +52,7 @@
 .decoration-circle.circle-3 {
     width: 200px;
     height: 200px;
-    background: rgba(52, 199, 89, 0.08);
+    background: var(--color-primary-light, rgba(52, 199, 89, 0.08));
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -200,7 +200,7 @@
 
 /* Login button */
 .login-button {
-    background: linear-gradient(135deg, #34C759 0%, #2da44e 100%);
+    background: linear-gradient(135deg, var(--color-primary, #34C759) 0%, var(--color-primary-hover, #2da44e) 100%);
     color: white;
     border: none;
     border-radius: 12px;
@@ -218,7 +218,7 @@
 
 .login-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(52, 199, 89, 0.3);
+    box-shadow: 0 10px 30px var(--color-primary-light, rgba(52, 199, 89, 0.3));
 }
 
 .login-button:active:not(:disabled) {

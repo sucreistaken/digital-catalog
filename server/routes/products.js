@@ -24,7 +24,11 @@ function attachImageSize(product) {
 // GET all products
 router.get('/', async (req, res) => {
     try {
-        const products = await Product.find().sort({ order: 1, createdAt: -1 });
+        const filter = {};
+        if (req.query.brand) {
+            filter.brand = req.query.brand;
+        }
+        const products = await Product.find(filter).sort({ order: 1, createdAt: -1 });
         res.json(products.map(attachImageSize));
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -96,7 +100,7 @@ router.delete('/bulk/delete', async (req, res) => {
 // PUT bulk update products
 router.put('/bulk/update', async (req, res) => {
     try {
-        const { ids, updates } = req.body;
+        const { ids, updates, brand } = req.body;
         if (!ids || !Array.isArray(ids) || ids.length === 0) {
             return res.status(400).json({ error: 'ids array gerekli' });
         }
@@ -117,8 +121,10 @@ router.put('/bulk/update', async (req, res) => {
             { $set: safeUpdates }
         );
 
-        const products = await Product.find().sort({ order: 1, createdAt: -1 });
-        res.json(products);
+        // Return only products for the specified brand
+        const filter = brand ? { brand } : {};
+        const products = await Product.find(filter).sort({ order: 1, createdAt: -1 });
+        res.json(products.map(attachImageSize));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -127,7 +133,7 @@ router.put('/bulk/update', async (req, res) => {
 // PUT reorder products within a category (drag & drop)
 router.put('/reorder/category', async (req, res) => {
     try {
-        const { categoryId, orderedIds } = req.body;
+        const { categoryId, orderedIds, brand } = req.body;
 
         if (!categoryId || !orderedIds || !Array.isArray(orderedIds)) {
             return res.status(400).json({ error: 'categoryId ve orderedIds array gerekli' });
@@ -144,9 +150,10 @@ router.put('/reorder/category', async (req, res) => {
 
         await Promise.all(updatePromises);
 
-        // Return all products (so frontend can update full list)
-        const products = await Product.find().sort({ order: 1, createdAt: -1 });
-        res.json(products);
+        // Return only products for the specified brand
+        const filter = brand ? { brand } : {};
+        const products = await Product.find(filter).sort({ order: 1, createdAt: -1 });
+        res.json(products.map(attachImageSize));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -155,7 +162,7 @@ router.put('/reorder/category', async (req, res) => {
 // PUT reorder products (drag & drop)
 router.put('/reorder/bulk', async (req, res) => {
     try {
-        const { orderedIds } = req.body; // Array of product IDs in new order
+        const { orderedIds, brand } = req.body; // Array of product IDs in new order
 
         if (!orderedIds || !Array.isArray(orderedIds)) {
             return res.status(400).json({ error: 'orderedIds array gerekli' });
@@ -172,9 +179,10 @@ router.put('/reorder/bulk', async (req, res) => {
 
         await Promise.all(updatePromises);
 
-        // Return updated products
-        const products = await Product.find().sort({ order: 1, createdAt: -1 });
-        res.json(products);
+        // Return only products for the specified brand
+        const filter = brand ? { brand } : {};
+        const products = await Product.find(filter).sort({ order: 1, createdAt: -1 });
+        res.json(products.map(attachImageSize));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -323,6 +331,7 @@ router.post('/seed', async (req, res) => {
         // Give each product a unique image using its SKU as seed
         const productsWithUniqueImages = seedProducts.map(p => ({
             ...p,
+            brand: 'freegarden',
             image: `https://picsum.photos/seed/${p.sku.toLowerCase()}/600/600`
         }));
 

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
+    brand: { type: String, enum: ['freegarden', 'fatihplastik'], default: 'freegarden', index: true },
     name: { type: String, default: 'Unnamed Product' },
     nameTr: { type: String, default: '' },
     sku: { type: String, default: () => `SKU-${Date.now()}` },

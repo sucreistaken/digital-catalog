@@ -35,7 +35,7 @@ const SiteContent = () => {
 
         // Footer
         footerDescription: 'Leading manufacturer of premium plastic garden products. Quality and sustainability in every piece.',
-        copyrightText: '© 2024 FreeGarden. All rights reserved.',
+        copyrightText: '© 2024 Fabrikaa. All rights reserved.',
 
         // Contact Page
         contactTitle: 'Get in Touch',

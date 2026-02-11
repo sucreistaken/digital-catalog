@@ -1,11 +1,13 @@
 import React from 'react';
 import { Shield, Award, CheckCircle, Download, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useBrand } from '../context/BrandContext';
 import { certificates } from '../data/certificates';
 import './Certificates.css';
 
 const Certificates = () => {
     const { t, language } = useLanguage();
+    const { brand } = useBrand();
 
     const getTitle = (cert) => {
         const langKey = `title${language.charAt(0).toUpperCase() + language.slice(1)}`;
@@ -64,7 +66,7 @@ const Certificates = () => {
 
                 {/* Trust Section */}
                 <section className="trust-section">
-                    <h2 className="text-h2">Why Trust FreeGarden?</h2>
+                    <h2 className="text-h2">{language === 'tr' ? `Neden ${brand?.name || 'Biz'}?` : `Why Trust ${brand?.name || 'Us'}?`}</h2>
                     <div className="trust-grid">
                         <div className="trust-item">
                             <div className="trust-number">25+</div>

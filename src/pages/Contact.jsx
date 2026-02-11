@@ -1,10 +1,12 @@
 import React from 'react';
 import { Phone, MessageCircle, Mail, MapPin, Clock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useBrand } from '../context/BrandContext';
 import './Contact.css';
 
 const Contact = () => {
     const { t } = useLanguage();
+    const { brand } = useBrand();
 
     return (
         <div className="contact-page">
@@ -34,12 +36,12 @@ const Contact = () => {
                         <span className="card-hint">Fast response</span>
                     </a>
 
-                    <a href="mailto:info@freegarden.com" className="contact-card-lg">
+                    <a href={`mailto:${brand?.email || 'info@freegarden.com'}`} className="contact-card-lg">
                         <div className="card-icon">
                             <Mail size={32} />
                         </div>
                         <h3>{t('emailUs')}</h3>
-                        <p className="contact-value">info@freegarden.com</p>
+                        <p className="contact-value">{brand?.email || 'info@freegarden.com'}</p>
                         <span className="card-hint">We reply within 24 hours</span>
                     </a>
 
