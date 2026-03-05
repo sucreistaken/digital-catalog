@@ -125,6 +125,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
         // Apply brand theme
         const brandName = brandConfig?.name || 'FreeGarden';
         const brandWebsite = brandConfig?.website || 'www.freegarden.com';
+        const brandLogo = brandConfig?.logo || null;
         if (brandConfig?.pdfTheme?.primary) {
             THEME = { ...DEFAULT_THEME, green: brandConfig.pdfTheme.primary };
         } else {
@@ -135,10 +136,11 @@ export const generateProductCatalog = async (products, categories, dbColors = []
 
         report(2);
 
-        // Load fonts
-        const [fontRaw, fontBoldRaw] = await Promise.all([
+        // Load fonts + brand logo in parallel
+        const [fontRaw, fontBoldRaw, logoData] = await Promise.all([
             getBase64FromUrl('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf', 8000),
             getBase64FromUrl('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf', 8000),
+            brandLogo ? getBase64FromUrl(brandLogo, 8000) : Promise.resolve(null),
         ]);
 
         report(8);
@@ -197,29 +199,60 @@ export const generateProductCatalog = async (products, categories, dbColors = []
         doc.setFillColor(...THEME.green);
         doc.rect(0, 0, PW, 5, 'F');
 
-        doc.setFont(font, 'bold');
-        doc.setFontSize(42);
-        doc.setTextColor(...THEME.white);
-        doc.text(brandName, PW / 2, 80, { align: 'center' });
+        // Brand logo or text
+        let coverTextStartY = 92;
+        if (logoData) {
+            try {
+                const logoImg = await new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => resolve(null);
+                    img.src = logoData;
+                });
+                if (logoImg) {
+                    const maxLogoW = 100;
+                    const maxLogoH = 40;
+                    const scale = Math.min(maxLogoW / logoImg.width, maxLogoH / logoImg.height, 1);
+                    const logoW = logoImg.width * scale;
+                    const logoH = logoImg.height * scale;
+                    const logoX = (PW - logoW) / 2;
+                    const logoY = 55;
+                    const ext = brandLogo.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
+                    doc.addImage(logoData, ext, logoX, logoY, logoW, logoH);
+                    coverTextStartY = logoY + logoH + 12;
+                }
+            } catch {
+                // Fallback to text
+                doc.setFont(font, 'bold');
+                doc.setFontSize(42);
+                doc.setTextColor(...THEME.white);
+                doc.text(brandName, PW / 2, 80, { align: 'center' });
+            }
+        } else {
+            doc.setFont(font, 'bold');
+            doc.setFontSize(42);
+            doc.setTextColor(...THEME.white);
+            doc.text(brandName, PW / 2, 80, { align: 'center' });
+        }
 
         doc.setFont(font, 'normal');
         doc.setFontSize(14);
         doc.setTextColor(...THEME.muted);
-        doc.text('Premium Garden Products', PW / 2, 92, { align: 'center' });
+        doc.text(brandConfig?.tagline || 'Premium Garden Products', PW / 2, coverTextStartY, { align: 'center' });
 
         doc.setDrawColor(...THEME.green);
         doc.setLineWidth(0.8);
-        doc.line(PW / 2 - 30, 102, PW / 2 + 30, 102);
+        doc.line(PW / 2 - 30, coverTextStartY + 10, PW / 2 + 30, coverTextStartY + 10);
 
         doc.setFont(font, 'bold');
         doc.setFontSize(20);
         doc.setTextColor(...THEME.white);
-        doc.text('ÜRÜN KATALOĞU', PW / 2, 125, { align: 'center' });
+        doc.text('ÜRÜN KATALOĞU', PW / 2, coverTextStartY + 33, { align: 'center' });
 
         doc.setFont(font, 'normal');
         doc.setFontSize(16);
         doc.setTextColor(...THEME.green);
-        doc.text(new Date().getFullYear().toString(), PW / 2, 136, { align: 'center' });
+        doc.text(new Date().getFullYear().toString(), PW / 2, coverTextStartY + 44, { align: 'center' });
 
         // Stats boxes
         const statsY = 200;
