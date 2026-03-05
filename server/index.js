@@ -10,8 +10,18 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Prevent browser from caching API responses
+app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    next();
+});
+// Serve uploaded files statically (short cache so image updates reflect quickly)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    maxAge: '5m',
+    etag: true,
+    lastModified: true
+}));
 
 // Serve React frontend static files
 app.use(express.static(path.join(__dirname, 'public')));
