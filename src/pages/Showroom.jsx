@@ -3,7 +3,7 @@ import { Viewer } from '@photo-sphere-viewer/core';
 import { VirtualTourPlugin } from '@photo-sphere-viewer/virtual-tour-plugin';
 import '@photo-sphere-viewer/core/index.css';
 import '@photo-sphere-viewer/virtual-tour-plugin/index.css';
-import { MapPin, ChevronLeft, Maximize, Minimize, ChevronDown, Search } from 'lucide-react';
+import { MapPin, ChevronLeft, Maximize, Minimize, ChevronDown, Search, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { showroomApi } from '../utils/api';
 import './Showroom.css';
@@ -311,10 +311,15 @@ const Showroom = () => {
                 <span>{language === 'tr' ? 'Ana Sayfa' : 'Home'}</span>
             </a>
 
-            {/* Overlay: Top right - Fullscreen toggle */}
-            <button className="showroom-fullscreen-btn" onClick={toggleFullscreen}>
-                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-            </button>
+            {/* Overlay: Top right - Close + Fullscreen */}
+            <div className="showroom-top-right">
+                <a href="/" className="showroom-close-btn" title={language === 'tr' ? 'Kapat' : 'Close'}>
+                    <X size={18} />
+                </a>
+                <button className="showroom-fullscreen-btn" onClick={toggleFullscreen}>
+                    {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+                </button>
+            </div>
 
             {/* Overlay: Bottom left - Zoom slider */}
             <div className="showroom-zoom-slider">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Package, Folder, MessageSquare, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe, ArrowLeftRight } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Package, Folder, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe, ArrowLeftRight } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useBrand } from '../context/BrandContext';
@@ -141,7 +141,6 @@ const PublicLayout = ({ children }) => {
                             <Link to="/catalog">{t('catalog')}</Link>
                             <Link to="/showroom">Showroom</Link>
                             <Link to="/certificates">{language === 'tr' ? 'Sertifikalar' : 'Certificates'}</Link>
-                            <Link to="/quote">{t('offer')}</Link>
                         </nav>
                     </div>
 
@@ -207,7 +206,6 @@ const AdminLayout = ({ children }) => {
         { path: '/admin/dashboard', icon: LayoutDashboard, label: t('dashboard') },
         { path: '/admin/products', icon: Package, label: t('products') },
         { path: '/admin/categories', icon: Folder, label: t('categories') },
-        { path: '/admin/quotes', icon: MessageSquare, label: t('quoteRequests') },
         { path: '/admin/customers', icon: Users, label: t('customers') },
         { path: '/admin/showroom-tour', icon: Globe, label: 'Showroom Tur' },
         { path: '/admin/content', icon: FileText, label: 'Site İçerikleri' },

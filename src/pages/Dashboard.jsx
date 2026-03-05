@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Folder, MessageSquare, Users, TrendingUp, ArrowUpRight, Loader2 } from 'lucide-react';
+import { Package, Folder, Users, TrendingUp, ArrowUpRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useBrand } from '../context/BrandContext';
 import { productsApi, categoriesApi } from '../utils/api';
 import './Dashboard.css';
 
 const Dashboard = () => {
     const { t } = useLanguage();
+    const { adminBrandId } = useBrand();
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,8 +17,8 @@ const Dashboard = () => {
         const loadData = async () => {
             try {
                 const [productsData, categoriesData] = await Promise.all([
-                    productsApi.getAll(),
-                    categoriesApi.getAll()
+                    productsApi.getAll(adminBrandId),
+                    categoriesApi.getAll(adminBrandId)
                 ]);
                 setProducts(productsData);
                 setCategories(categoriesData);
@@ -27,12 +29,11 @@ const Dashboard = () => {
             }
         };
         loadData();
-    }, []);
+    }, [adminBrandId]);
 
     const stats = [
         { label: 'Total Products', value: products.length, icon: Package, link: '/admin/products', color: 'var(--color-primary)' },
         { label: 'Categories', value: categories.length, icon: Folder, link: '/admin/categories', color: 'var(--color-info)' },
-        { label: 'Quote Requests', value: 12, icon: MessageSquare, link: '/admin/quotes', color: 'var(--color-warning)' },
         { label: 'Customers', value: 48, icon: Users, link: '/admin/customers', color: '#A855F7' },
     ];
 
@@ -103,10 +104,6 @@ const Dashboard = () => {
                         <Link to="/admin/products" className="action-card">
                             <Package size={20} />
                             <span>Manage Products</span>
-                        </Link>
-                        <Link to="/admin/quotes" className="action-card">
-                            <MessageSquare size={20} />
-                            <span>View Quotes</span>
                         </Link>
                         <Link to="/admin/categories" className="action-card">
                             <Folder size={20} />

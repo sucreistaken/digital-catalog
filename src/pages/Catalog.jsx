@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Ruler, Weight, Box, ChevronRight, FileText, Eye, Loader2, Copy, Check, Package, Layers, Hash, Droplets, ChevronDown, Filter } from 'lucide-react';
+import { Search, X, Ruler, Weight, Box, ChevronRight, Eye, Loader2, Copy, Check, Package, Layers, Hash, Droplets, ChevronDown, Filter } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useBrand } from '../context/BrandContext';
 import { colors as staticColors, materials } from '../data/products';
@@ -27,7 +27,7 @@ const getColor = (colorId, colorsList) => {
 };
 
 // Product Modal (Standard Version)
-const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProducts, onSwitchProduct, categories, colorsList }) => {
+const ProductModal = ({ product, onClose, language, t, allProducts, onSwitchProduct, categories, colorsList }) => {
     if (!product) return null;
 
     // Initialize with default color if available
@@ -227,11 +227,7 @@ const ProductModal = ({ product, onClose, onRequestQuote, language, t, allProduc
                         </div>
 
                         <div className="modal-actions-grid">
-                            <button className="modal-btn-primary" onClick={() => onRequestQuote(product)}>
-                                <FileText size={18} />
-                                <span>{language === 'tr' ? 'Teklif Al' : 'Get Quote'}</span>
-                            </button>
-                            <a href="/showroom" className="modal-btn-secondary">
+                            <a href="/showroom" className="modal-btn-primary">
                                 <Eye size={18} />
                                 <span>Showroom</span>
                             </a>
@@ -413,11 +409,6 @@ const Catalog = () => {
             return (a.order || 0) - (b.order || 0);
         });
 
-    const handleRequestQuote = (product) => {
-        setSelectedProduct(null);
-        // Navigate to quote page with product pre-selected
-        window.location.href = `/quote?product=${product._id || product.id}`;
-    };
 
     const catalogContentRef = React.useRef(null);
     const scrollContainerRef = React.useRef(null);
@@ -463,7 +454,6 @@ const Catalog = () => {
                 <ProductModal
                     product={selectedProduct}
                     onClose={() => setSelectedProduct(null)}
-                    onRequestQuote={handleRequestQuote}
                     language={language}
                     t={t}
                     allProducts={products}
@@ -551,22 +541,54 @@ const Catalog = () => {
                         </>
                     ) : activeCategory === 'all' && !searchQuery ? (
                         /* Grouped by category view */
-                        categories
-                            .filter(cat => filteredProducts.some(p => p.category === cat.id))
-                            .map(cat => {
-                                const catProducts = filteredProducts.filter(p => p.category === cat.id);
+                        <>
+                            {categories
+                                .filter(cat => filteredProducts.some(p => p.category === cat.id))
+                                .map(cat => {
+                                    const catProducts = filteredProducts.filter(p => p.category === cat.id);
+                                    return (
+                                        <div key={cat.id} className="catalog-category-section">
+                                            <div className="category-section-header">
+                                                <div>
+                                                    <h2 className="section-title">{getCategoryName(cat, language)}</h2>
+                                                    <p className="results-text">
+                                                        <strong>{catProducts.length}</strong> {t('products').toLowerCase()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="products-grid">
+                                                {catProducts.map((product, index) => (
+                                                    <ProductCard
+                                                        key={product._id || product.id}
+                                                        product={product}
+                                                        onClick={setSelectedProduct}
+                                                        language={language}
+                                                        t={t}
+                                                        index={index}
+                                                        colorsList={colorsList}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            {/* Products without a matching category */}
+                            {(() => {
+                                const categoryIds = categories.map(c => c.id);
+                                const uncategorized = filteredProducts.filter(p => !categoryIds.includes(p.category));
+                                if (uncategorized.length === 0) return null;
                                 return (
-                                    <div key={cat.id} className="catalog-category-section">
+                                    <div className="catalog-category-section">
                                         <div className="category-section-header">
                                             <div>
-                                                <h2 className="section-title">{getCategoryName(cat, language)}</h2>
+                                                <h2 className="section-title">{language === 'tr' ? 'Ürünler' : 'Products'}</h2>
                                                 <p className="results-text">
-                                                    <strong>{catProducts.length}</strong> {t('products').toLowerCase()}
+                                                    <strong>{uncategorized.length}</strong> {t('products').toLowerCase()}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="products-grid">
-                                            {catProducts.map((product, index) => (
+                                            {uncategorized.map((product, index) => (
                                                 <ProductCard
                                                     key={product._id || product.id}
                                                     product={product}
@@ -580,7 +602,8 @@ const Catalog = () => {
                                         </div>
                                     </div>
                                 );
-                            })
+                            })()}
+                        </>
                     ) : (
                         /* Filtered / single category view */
                         <>

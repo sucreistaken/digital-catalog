@@ -7,7 +7,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BrandSelection from './pages/BrandSelection';
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
-import Quote from './pages/Quote';
 import Contact from './pages/Contact';
 import Certificates from './pages/Certificates';
 import Showroom from './pages/Showroom';
@@ -15,7 +14,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/admin/Products';
 import Categories from './pages/admin/Categories';
-import Quotes from './pages/admin/Quotes';
 import Customers from './pages/admin/Customers';
 import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
@@ -39,7 +37,6 @@ function App() {
         {/* Public Routes (require brand) */}
         <Route path="/home" element={<BrandGuard><Layout><Home /></Layout></BrandGuard>} />
         <Route path="/catalog" element={<BrandGuard><Layout><Catalog /></Layout></BrandGuard>} />
-        <Route path="/quote" element={<BrandGuard><Layout><Quote /></Layout></BrandGuard>} />
         <Route path="/contact" element={<BrandGuard><Layout><Contact /></Layout></BrandGuard>} />
         <Route path="/certificates" element={<BrandGuard><Layout><Certificates /></Layout></BrandGuard>} />
 
@@ -63,11 +60,6 @@ function App() {
         <Route path="/admin/categories" element={
           <ProtectedRoute>
             <Layout type="admin"><Categories /></Layout>
-          </ProtectedRoute>
-        } />
-        <Route path="/admin/quotes" element={
-          <ProtectedRoute>
-            <Layout type="admin"><Quotes /></Layout>
           </ProtectedRoute>
         } />
         <Route path="/admin/customers" element={
