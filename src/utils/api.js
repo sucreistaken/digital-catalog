@@ -173,6 +173,59 @@ export const productsApi = {
     }
 };
 
+// Brands API
+export const brandsApi = {
+    getAll: async () => {
+        const res = await fetch(`${API_BASE_URL}/brands`);
+        if (!res.ok) throw new Error('Markalar yuklenemedi');
+        return res.json();
+    },
+
+    getById: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/brands/${id}`);
+        if (!res.ok) throw new Error('Marka bulunamadi');
+        return res.json();
+    },
+
+    create: async (brand) => {
+        const res = await fetch(`${API_BASE_URL}/brands`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(brand)
+        });
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Marka olusturulamadi');
+        }
+        return res.json();
+    },
+
+    update: async (id, brand) => {
+        const res = await fetch(`${API_BASE_URL}/brands/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(brand)
+        });
+        if (!res.ok) throw new Error('Marka guncellenemedi');
+        return res.json();
+    },
+
+    delete: async (id) => {
+        const res = await fetch(`${API_BASE_URL}/brands/${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Marka silinemedi');
+        return res.json();
+    },
+
+    seed: async () => {
+        const res = await fetch(`${API_BASE_URL}/brands/seed`, {
+            method: 'POST'
+        });
+        return res.json();
+    }
+};
+
 // Health check
 export const checkApiHealth = async () => {
     try {

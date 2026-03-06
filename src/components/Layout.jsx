@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LayoutDashboard, Package, Folder, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe, ArrowLeftRight } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Package, Folder, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe, ArrowLeftRight, Tag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useBrand } from '../context/BrandContext';
-import { brandList, getBrand } from '../config/brands';
 import '../styles/layout.css';
 import WhatsAppButton from './WhatsAppButton';
 
@@ -41,12 +40,13 @@ const LanguageSwitcher = () => {
 // Public Layout
 const PublicLayout = ({ children }) => {
     const { t, language } = useLanguage();
-    const { brand, brandId, clearBrand } = useBrand();
+    const { brand, brandId, clearBrand, getAllBrands } = useBrand();
     const location = useLocation();
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
 
-    const otherBrand = brandList.find(b => b.id !== brandId);
+    const allBrands = getAllBrands();
+    const otherBrand = allBrands.find(b => b.id !== brandId);
 
     const handleSwitchBrand = () => {
         clearBrand();
@@ -194,8 +194,9 @@ const AdminLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const { adminBrand, adminBrandId, setAdminBrand } = useBrand();
+    const { adminBrand, adminBrandId, setAdminBrand, getAllBrands } = useBrand();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const allBrands = getAllBrands();
 
     const handleLogout = () => {
         logout();
@@ -209,6 +210,7 @@ const AdminLayout = ({ children }) => {
         { path: '/admin/customers', icon: Users, label: t('customers') },
         { path: '/admin/showroom-tour', icon: Globe, label: 'Showroom Tur' },
         { path: '/admin/content', icon: FileText, label: 'Site İçerikleri' },
+        { path: '/admin/brands', icon: Tag, label: 'Markalar' },
         { path: '/admin/analytics', icon: BarChart2, label: 'Analytics' },
         { path: '/admin/settings', icon: Settings, label: t('settings') },
     ];
@@ -231,7 +233,7 @@ const AdminLayout = ({ children }) => {
 
                 {/* Brand Switcher */}
                 <div className="sidebar-brand-switcher">
-                    {brandList.map(b => (
+                    {allBrands.map(b => (
                         <button
                             key={b.id}
                             className={`brand-switch-btn ${adminBrandId === b.id ? 'active' : ''}`}

@@ -1366,14 +1366,14 @@
 }
 
 .modal-btn-primary {
-    background: linear-gradient(135deg, #34C759 0%, #28a745 100%);
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
     color: white;
-    box-shadow: 0 4px 14px rgba(52, 199, 89, 0.3);
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
 }
 
 .modal-btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
 }
 
 .modal-btn-secondary {

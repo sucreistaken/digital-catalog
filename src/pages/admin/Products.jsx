@@ -101,11 +101,11 @@ const Products = () => {
             setLoading(true);
             setError(null);
             const data = await productsApi.getAll(adminBrandId);
-            setProducts(data.length > 0 ? data : defaultProducts);
+            setProducts(data);
         } catch (err) {
             console.error('API Error:', err);
-            setError('API bağlantısı başarısız. Varsayılan ürünler yükleniyor...');
-            setProducts(defaultProducts);
+            setError('API bağlantısı başarısız.');
+            setProducts([]);
         } finally {
             setLoading(false);
         }

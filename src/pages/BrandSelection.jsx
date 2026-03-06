@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { useBrand } from '../context/BrandContext';
-import { brandList } from '../config/brands';
 import { useLanguage } from '../context/LanguageContext';
 import './BrandSelection.css';
 
@@ -15,9 +14,11 @@ const SLIDESHOW_IMAGES = [
 
 const BrandSelection = () => {
     const navigate = useNavigate();
-    const { setBrand } = useBrand();
+    const { setBrand, getAllBrands } = useBrand();
     const { language } = useLanguage();
     const [currentSlide, setCurrentSlide] = useState(0);
+
+    const brands = getAllBrands();
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -50,11 +51,11 @@ const BrandSelection = () => {
                 <div className="brand-selection-header">
                     <h1 className="brand-selection-title">Fatih Plastik</h1>
                     <p className="brand-selection-subtitle">
-                        {language === 'tr' ? 'Markamızı seçin' : 'Select our brand'}
+                        {language === 'tr' ? 'Markamizi secin' : 'Select our brand'}
                     </p>
                 </div>
                 <div className="brand-cards">
-                    {brandList.map((brand) => (
+                    {brands.map((brand) => (
                         <button
                             key={brand.id}
                             className="brand-card"
@@ -80,7 +81,7 @@ const BrandSelection = () => {
                 </div>
                 <Link to="/showroom" className="showroom-hint">
                     <Eye size={16} />
-                    {language === 'tr' ? 'Showroom\'a göz at' : 'Browse Showroom'}
+                    {language === 'tr' ? 'Showroom\'a goz at' : 'Browse Showroom'}
                 </Link>
             </div>
         </div>

@@ -19,6 +19,7 @@ import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
 import SiteContent from './pages/admin/SiteContent';
 import ShowroomTour from './pages/admin/ShowroomTour';
+import Brands from './pages/admin/Brands';
 
 // BrandGuard: redirects to brand selection if no brand is chosen
 const BrandGuard = ({ children }) => {
@@ -80,6 +81,11 @@ function App() {
         <Route path="/admin/showroom-tour" element={
           <ProtectedRoute>
             <Layout type="admin"><ShowroomTour /></Layout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/brands" element={
+          <ProtectedRoute>
+            <Layout type="admin"><Brands /></Layout>
           </ProtectedRoute>
         } />
         <Route path="/admin/content" element={

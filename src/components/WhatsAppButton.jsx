@@ -1,9 +1,11 @@
 import React from 'react';
+import { useBrand } from '../context/BrandContext';
 import '../styles/whatsapp.css';
 
 const WhatsAppButton = () => {
-    const phoneNumber = '905492074444';
-    const message = 'Merhaba, ürünleriniz hakkında bilgi almak istiyorum.'; // Optional default message
+    const { brand } = useBrand();
+    const phoneNumber = brand?.whatsapp || '905492074444';
+    const message = 'Merhaba, urunleriniz hakkinda bilgi almak istiyorum.';
 
     const handleClick = () => {
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
