@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { useBrand } from '../context/BrandContext';
 import { useLanguage } from '../context/LanguageContext';
+import { trackBrandSelect } from '../utils/analytics';
 import './BrandSelection.css';
 
 const SLIDESHOW_IMAGES = [
@@ -28,6 +29,7 @@ const BrandSelection = () => {
     }, []);
 
     const handleSelect = (brandId) => {
+        trackBrandSelect(brandId);
         setBrand(brandId);
         navigate('/home');
     };

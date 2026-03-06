@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, LayoutDashboard, Package, Folder, Users, Settings, LogOut, ChevronDown, BarChart2, FileText, Globe, ArrowLeftRight, Tag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBrand } from '../context/BrandContext';
 import '../styles/layout.css';
 import WhatsAppButton from './WhatsAppButton';
+import { trackPageView } from '../utils/analytics';
 
 // Language Switcher Component
 const LanguageSwitcher = () => {
@@ -47,6 +48,11 @@ const PublicLayout = ({ children }) => {
 
     const allBrands = getAllBrands();
     const otherBrand = allBrands.find(b => b.id !== brandId);
+
+    // Track page views
+    useEffect(() => {
+        trackPageView(location.pathname, brandId);
+    }, [location.pathname, brandId]);
 
     const handleSwitchBrand = () => {
         clearBrand();

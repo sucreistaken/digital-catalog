@@ -5,6 +5,7 @@ import { useBrand } from '../../context/BrandContext';
 import { products as defaultProducts, materials, colors } from '../../data/products';
 import { generateProductCatalog } from '../../utils/pdfGenerator';
 import { productsApi, categoriesApi, colorsApi } from '../../utils/api';
+import { trackPdfExport } from '../../utils/analytics';
 import ProductEditModal from '../../components/ProductEditModal';
 import ImageGalleryAssigner from '../../components/ImageGalleryAssigner';
 import '../Dashboard.css';
@@ -335,6 +336,7 @@ const Products = () => {
 
             setExportProgress(100);
             setExportComplete(true);
+            trackPdfExport(adminBrand?.id);
 
             setTimeout(() => {
                 showToast('PDF başarıyla indirildi');

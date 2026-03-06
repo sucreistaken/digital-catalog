@@ -1,5 +1,6 @@
 import React from 'react';
 import { useBrand } from '../context/BrandContext';
+import { trackWhatsAppClick } from '../utils/analytics';
 import '../styles/whatsapp.css';
 
 const WhatsAppButton = () => {
@@ -8,6 +9,7 @@ const WhatsAppButton = () => {
     const message = 'Merhaba, urunleriniz hakkinda bilgi almak istiyorum.';
 
     const handleClick = () => {
+        trackWhatsAppClick(brand?.id, 'floating_button');
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     };
