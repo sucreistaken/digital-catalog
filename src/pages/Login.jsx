@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, Loader2 } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
@@ -9,7 +9,7 @@ const Login = () => {
     const location = useLocation();
     const { login, loading, error } = useAuth();
 
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [localError, setLocalError] = useState('');
@@ -20,12 +20,12 @@ const Login = () => {
         e.preventDefault();
         setLocalError('');
 
-        if (!email || !password) {
-            setLocalError('Email ve şifre gerekli');
+        if (!username || !password) {
+            setLocalError('Kullanıcı adı ve şifre gerekli');
             return;
         }
 
-        const result = await login(email, password);
+        const result = await login(username, password);
 
         if (result.success) {
             navigate(from, { replace: true });
@@ -49,7 +49,7 @@ const Login = () => {
                     {/* Logo & Header */}
                     <div className="login-header">
                         <div className="login-logo">
-                            <span className="brand-free">Fabrikaa</span>
+                            <span className="brand-free">Fatih Plastik</span>
                         </div>
                         <h1>Admin Paneli</h1>
                         <p>Devam etmek için giriş yapın</p>
@@ -65,17 +65,17 @@ const Login = () => {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="login-form">
                         <div className="form-group">
-                            <label htmlFor="email">
-                                <Mail size={18} />
-                                Email
+                            <label htmlFor="username">
+                                <User size={18} />
+                                Kullanıcı Adı
                             </label>
                             <input
-                                type="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="admin@fabrikaa.com"
-                                autoComplete="email"
+                                type="text"
+                                id="username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Kullanıcı adınız"
+                                autoComplete="username"
                                 required
                                 disabled={loading}
                             />
@@ -125,7 +125,7 @@ const Login = () => {
 
                     {/* Footer */}
                     <div className="login-footer">
-                        <p>&copy; 2026 Fabrikaa. Tüm hakları saklıdır.</p>
+                        <p>&copy; 2026 Fatih Plastik. Tüm hakları saklıdır.</p>
                     </div>
                 </div>
             </div>

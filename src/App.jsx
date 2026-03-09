@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useBrand } from './context/BrandContext';
 import Layout from './components/Layout';
@@ -29,9 +29,12 @@ const BrandGuard = ({ children }) => {
 };
 
 // DomainRedirect: if domain maps to a brand, skip brand selection and go to /home
+// Unless user explicitly navigated here (e.g. via switch button)
 const DomainRedirect = () => {
-  const { domainBrand } = useBrand();
-  if (domainBrand) return <Navigate to="/home" replace />;
+  const { domainBrand, brandId } = useBrand();
+  const location = useLocation();
+  const forceShow = location.state?.showBrandSelection;
+  if (domainBrand && !forceShow) return <Navigate to="/home" replace />;
   return <BrandSelection />;
 };
 

@@ -6,17 +6,17 @@ const { authenticate, generateToken } = require('../middleware/authMiddleware');
 // POST /api/auth/login - Login user
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { username, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email ve şifre gerekli' });
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Kullanıcı adı ve şifre gerekli' });
         }
 
         // Find user with password field
-        const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+        const user = await User.findOne({ username: username.toLowerCase() }).select('+password');
 
         if (!user) {
-            return res.status(401).json({ error: 'Geçersiz email veya şifre' });
+            return res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
         }
 
         if (!user.isActive) {
@@ -27,7 +27,7 @@ router.post('/login', async (req, res) => {
         const isMatch = await user.comparePassword(password);
 
         if (!isMatch) {
-            return res.status(401).json({ error: 'Geçersiz email veya şifre' });
+            return res.status(401).json({ error: 'Geçersiz kullanıcı adı veya şifre' });
         }
 
         // Update last login
@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
             token,
             user: {
                 id: user._id,
-                email: user.email,
+                username: user.username,
                 name: user.name,
                 role: user.role
             }
@@ -58,7 +58,7 @@ router.get('/me', authenticate, async (req, res) => {
         res.json({
             user: {
                 id: req.user._id,
-                email: req.user.email,
+                username: req.user.username,
                 name: req.user.name,
                 role: req.user.role
             }
@@ -76,18 +76,54 @@ router.post('/logout', authenticate, (req, res) => {
     res.json({ message: 'Çıkış başarılı' });
 });
 
+// PUT /api/auth/credentials - Update username/password
+router.put('/credentials', authenticate, async (req, res) => {
+    try {
+        const { currentPassword, newUsername, newPassword } = req.body;
+
+        if (!currentPassword) {
+            return res.status(400).json({ error: 'Mevcut şifre gerekli' });
+        }
+
+        const user = await User.findById(req.user._id).select('+password');
+        const isMatch = await user.comparePassword(currentPassword);
+
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Mevcut şifre hatalı' });
+        }
+
+        if (newUsername) {
+            const existing = await User.findOne({ username: newUsername.toLowerCase(), _id: { $ne: user._id } });
+            if (existing) {
+                return res.status(400).json({ error: 'Bu kullanıcı adı zaten kullanılıyor' });
+            }
+            user.username = newUsername;
+        }
+
+        if (newPassword) {
+            if (newPassword.length < 4) {
+                return res.status(400).json({ error: 'Şifre en az 4 karakter olmalı' });
+            }
+            user.password = newPassword;
+        }
+
+        await user.save();
+        res.json({ message: 'Bilgiler güncellendi' });
+    } catch (error) {
+        console.error('Credentials update error:', error);
+        res.status(500).json({ error: 'Bilgiler güncellenirken hata oluştu' });
+    }
+});
+
 // POST /api/auth/seed - Create initial admin user (remove in production)
 router.post('/seed', async (req, res) => {
     try {
-        const existingAdmin = await User.findOne({ role: 'admin' });
-
-        if (existingAdmin) {
-            return res.status(400).json({ error: 'Admin kullanıcı zaten mevcut' });
-        }
+        // Remove existing admin and recreate
+        await User.deleteMany({ role: 'admin' });
 
         const admin = new User({
-            email: 'admin@fabrikaa.com',
-            password: 'admin123',
+            username: 'hacihiradagi',
+            password: 'hiradagi',
             name: 'Admin',
             role: 'admin',
             isActive: true
@@ -98,8 +134,7 @@ router.post('/seed', async (req, res) => {
         res.json({
             message: 'Admin kullanıcı oluşturuldu',
             credentials: {
-                email: 'admin@fabrikaa.com',
-                password: 'admin123'
+                username: 'hacihiradagi'
             }
         });
     } catch (error) {

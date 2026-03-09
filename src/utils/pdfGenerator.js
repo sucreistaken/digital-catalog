@@ -124,7 +124,7 @@ export const generateProductCatalog = async (products, categories, dbColors = []
     try {
         // Apply brand theme
         const brandName = brandConfig?.name || 'FreeGarden';
-        const brandWebsite = brandConfig?.website || 'www.freegarden.com';
+        const brandWebsite = brandConfig?.website || 'www.freegardensaksi.com';
         const brandLogo = brandConfig?.logo || null;
         if (brandConfig?.pdfTheme?.primary) {
             THEME = { ...DEFAULT_THEME, green: brandConfig.pdfTheme.primary };

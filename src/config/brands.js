@@ -8,7 +8,7 @@ const brands = {
         tagline: 'Premium Plastic Solutions',
         taglineTr: 'Premium Plastik Çözümler',
         email: 'info@freegarden.com',
-        website: 'www.freegarden.com',
+        website: 'www.freegardensaksi.com',
         phone: '+90 500 123 45 67',
         logo: freegardenLogo,
         theme: {
@@ -27,7 +27,7 @@ const brands = {
         tagline: 'Industrial Plastic Solutions',
         taglineTr: 'Endüstriyel Plastik Çözümler',
         email: 'info@fatihplastik.com',
-        website: 'www.fatihplastik.com',
+        website: 'www.plastime.com.tr',
         phone: '+90 500 765 43 21',
         logo: fatihplastikLogo,
         theme: {

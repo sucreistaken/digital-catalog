@@ -12,10 +12,21 @@ const DOMAIN_BRAND_MAP = {
     'www.freegardensaksi.com': 'freegarden',
 };
 
+// Brand -> Domain mapping (for cross-domain navigation)
+const BRAND_DOMAIN_MAP = {
+    'fatihplastik': 'https://plastime.com.tr',
+    'freegarden': 'https://freegardensaksi.com',
+};
+
 // Detect brand from current hostname
 const detectBrandFromDomain = () => {
     const hostname = window.location.hostname.toLowerCase();
     return DOMAIN_BRAND_MAP[hostname] || null;
+};
+
+// Get the domain URL for a given brand
+export const getDomainForBrand = (brandId) => {
+    return BRAND_DOMAIN_MAP[brandId] || null;
 };
 
 // Convert API brand to the format used in the app
@@ -119,7 +130,7 @@ export const BrandProvider = ({ children }) => {
             });
             document.title = brand.name;
         } else {
-            document.title = 'Fabrikaa';
+            document.title = 'Fatih Plastik';
         }
     }, [brandId, dynamicBrands]);
 
@@ -140,7 +151,7 @@ export const BrandProvider = ({ children }) => {
                 document.documentElement.style.setProperty(key, value);
             });
         }
-        document.title = 'Fabrikaa';
+        document.title = 'Fatih Plastik';
     };
 
     const refreshBrands = async () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
-import { useBrand } from '../context/BrandContext';
+import { useBrand, getDomainForBrand } from '../context/BrandContext';
 import { useLanguage } from '../context/LanguageContext';
 import { trackBrandSelect } from '../utils/analytics';
 import './BrandSelection.css';
@@ -15,7 +15,7 @@ const SLIDESHOW_IMAGES = [
 
 const BrandSelection = () => {
     const navigate = useNavigate();
-    const { setBrand, getAllBrands } = useBrand();
+    const { setBrand, getAllBrands, domainBrand } = useBrand();
     const { language } = useLanguage();
     const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -30,6 +30,12 @@ const BrandSelection = () => {
 
     const handleSelect = (brandId) => {
         trackBrandSelect(brandId);
+        // If on a mapped domain and selecting a different brand, redirect to that brand's domain
+        const targetDomain = getDomainForBrand(brandId);
+        if (domainBrand && brandId !== domainBrand && targetDomain) {
+            window.location.href = targetDomain + '/home';
+            return;
+        }
         setBrand(brandId);
         navigate('/home');
     };

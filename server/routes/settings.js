@@ -74,7 +74,7 @@ router.post('/seed', async (req, res) => {
             { key: 'phone', value: '+90 500 123 45 67', group: 'contact' },
             { key: 'whatsapp', value: '+90 500 123 45 67', group: 'contact' },
             { key: 'address', value: 'Adana, Turkey', group: 'contact' },
-            { key: 'website', value: 'www.freegarden.com', group: 'company' },
+            { key: 'website', value: 'www.freegardensaksi.com', group: 'company' },
             { key: 'defaultLanguage', value: 'en', group: 'appearance' },
             { key: 'instagram', value: '', group: 'social' },
             { key: 'facebook', value: '', group: 'social' },

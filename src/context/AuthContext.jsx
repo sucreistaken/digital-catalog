@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
     }, [checkAuth]);
 
     // Login function
-    const login = async (email, password) => {
+    const login = async (username, password) => {
         setError(null);
         setLoading(true);
 
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ username, password })
             });
 
             const data = await res.json();

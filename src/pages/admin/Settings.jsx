@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Upload, Globe, Phone, Mail, MapPin, Loader2, RefreshCw } from 'lucide-react';
+import { Save, Upload, Globe, Phone, Mail, MapPin, Loader2, RefreshCw, Lock, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { settingsApi } from '../../utils/api';
 import '../Dashboard.css';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 const Settings = () => {
     const { t } = useLanguage();
+    const { user, token } = useAuth();
+    const [credentials, setCredentials] = useState({
+        currentPassword: '',
+        newUsername: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [credSaving, setCredSaving] = useState(false);
     const [settings, setSettings] = useState({
         companyName: '',
         email: '',
@@ -53,6 +64,40 @@ const Settings = () => {
             showToast(error.message, 'error');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleCredentialsSave = async () => {
+        if (!credentials.currentPassword) {
+            showToast('Mevcut şifre gerekli', 'error');
+            return;
+        }
+        if (credentials.newPassword && credentials.newPassword !== credentials.confirmPassword) {
+            showToast('Yeni şifreler eşleşmiyor', 'error');
+            return;
+        }
+        try {
+            setCredSaving(true);
+            const res = await fetch(`${API_BASE_URL}/auth/credentials`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    currentPassword: credentials.currentPassword,
+                    newUsername: credentials.newUsername || undefined,
+                    newPassword: credentials.newPassword || undefined
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            showToast('Giriş bilgileri güncellendi');
+            setCredentials({ currentPassword: '', newUsername: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            setCredSaving(false);
         }
     };
 
@@ -201,6 +246,50 @@ const Settings = () => {
                             <option value="zh">中文</option>
                         </select>
                     </div>
+                </div>
+
+                {/* Account Credentials */}
+                <div className="settings-section card">
+                    <h3><Lock size={18} /> Giriş Bilgileri</h3>
+                    <div className="form-group">
+                        <label><User size={16} /> Yeni Kullanıcı Adı</label>
+                        <input
+                            type="text"
+                            value={credentials.newUsername}
+                            onChange={e => setCredentials({ ...credentials, newUsername: e.target.value })}
+                            placeholder={user?.username || 'Yeni kullanıcı adı'}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label><Lock size={16} /> Yeni Şifre</label>
+                        <input
+                            type="password"
+                            value={credentials.newPassword}
+                            onChange={e => setCredentials({ ...credentials, newPassword: e.target.value })}
+                            placeholder="Yeni şifre"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label><Lock size={16} /> Yeni Şifre (Tekrar)</label>
+                        <input
+                            type="password"
+                            value={credentials.confirmPassword}
+                            onChange={e => setCredentials({ ...credentials, confirmPassword: e.target.value })}
+                            placeholder="Yeni şifre tekrar"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label><Lock size={16} /> Mevcut Şifre (onay için)</label>
+                        <input
+                            type="password"
+                            value={credentials.currentPassword}
+                            onChange={e => setCredentials({ ...credentials, currentPassword: e.target.value })}
+                            placeholder="Mevcut şifreniz"
+                        />
+                    </div>
+                    <button className="btn btn-primary" onClick={handleCredentialsSave} disabled={credSaving} style={{ marginTop: '8px' }}>
+                        {credSaving ? <><Loader2 size={18} className="spin" /> Kaydediliyor...</> : <><Save size={18} /> Bilgileri Güncelle</>}
+                    </button>
                 </div>
 
                 {/* Social Media */}

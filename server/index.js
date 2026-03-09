@@ -69,7 +69,7 @@ app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Fabrikaa API çalışıyor!' });
+    res.json({ status: 'ok', message: 'API çalışıyor!' });
 });
 
 // Handle SPA routing: serve index.html for any unknown route

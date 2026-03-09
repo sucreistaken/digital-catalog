@@ -56,7 +56,7 @@ const PublicLayout = ({ children }) => {
 
     const handleSwitchBrand = () => {
         clearBrand();
-        navigate('/');
+        navigate('/', { state: { showBrandSelection: true } });
     };
 
     const navLinks = [
@@ -75,7 +75,7 @@ const PublicLayout = ({ children }) => {
                         <img src={brand.logo} alt={brand.name} className="brand-logo" style={{ height: '60px' }} />
                     ) : (
                         <span className="brand-text-logo" style={{ color: brand?.theme['--color-primary'] || '#1D1D1F', fontSize: '1.5rem', fontWeight: 700 }}>
-                            {brand?.name || 'Fabrikaa'}
+                            {brand?.name || 'Fatih Plastik'}
                         </span>
                     )}
                 </Link>
@@ -118,7 +118,7 @@ const PublicLayout = ({ children }) => {
                                 <img src={brand.logo} alt={brand.name} className="brand-logo" style={{ height: '60px' }} />
                             ) : (
                                 <span style={{ color: brand?.theme['--color-primary'] || '#fff', fontSize: '1.5rem', fontWeight: 700 }}>
-                                    {brand?.name || 'Fabrikaa'}
+                                    {brand?.name || 'Fatih Plastik'}
                                 </span>
                             )}
                         </div>
@@ -178,7 +178,7 @@ const PublicLayout = ({ children }) => {
                 <div className="footer-bottom-pro">
                     <div className="container footer-bottom-inner">
                         <div className="footer-copyright">
-                            <span>&copy; 2026 {brand?.name || 'Fabrikaa'}. {t('allRightsReserved')}</span>
+                            <span>&copy; 2026 {brand?.name || 'Fatih Plastik'}. {t('allRightsReserved')}</span>
                         </div>
                         <div className="footer-legal">
                             <a href="#">{language === 'tr' ? 'Gizlilik' : 'Privacy'}</a>
@@ -230,7 +230,7 @@ const AdminLayout = ({ children }) => {
                             <img src={adminBrand.logo} alt={adminBrand.name} className="brand-logo" style={{ height: '40px' }} />
                         ) : (
                             <span style={{ color: adminBrand?.theme['--color-primary'] || '#1D1D1F', fontSize: '1.25rem', fontWeight: 700 }}>
-                                {adminBrand?.name || 'Fabrikaa'}
+                                {adminBrand?.name || 'Fatih Plastik'}
                             </span>
                         )}
                     </Link>

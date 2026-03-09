@@ -90,7 +90,7 @@ router.post('/seed', async (req, res) => {
                 email: 'info@freegarden.com',
                 phone: '+90 500 123 45 67',
                 whatsapp: '905492074444',
-                website: 'www.freegarden.com',
+                website: 'www.freegardensaksi.com',
                 logo: '',
                 theme: {
                     primaryColor: '#34C759',
@@ -108,7 +108,7 @@ router.post('/seed', async (req, res) => {
                 email: 'info@fatihplastik.com',
                 phone: '+90 500 765 43 21',
                 whatsapp: '905492074444',
-                website: 'www.fatihplastik.com',
+                website: 'www.plastime.com.tr',
                 logo: '',
                 theme: {
                     primaryColor: '#CF2030',
