@@ -55,7 +55,7 @@ const PublicLayout = ({ children }) => {
     }, [location.pathname, brandId]);
 
     const handleSwitchBrand = () => {
-        navigate('/', { state: { showBrandSelection: true } });
+        navigate('/?switch=true');
     };
 
     const navLinks = [
