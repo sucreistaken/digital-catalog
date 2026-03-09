@@ -99,9 +99,6 @@ const PublicLayout = ({ children }) => {
                         <span className="brand-switch-label">{otherBrand?.name}</span>
                     </button>
                     <LanguageSwitcher />
-                    <Link to="/admin/dashboard" className="btn btn-primary btn-sm">
-                        {t('adminPanel')}
-                    </Link>
                     <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
                         {menuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
