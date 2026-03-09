@@ -121,7 +121,7 @@ export const BrandProvider = ({ children }) => {
         return staticBrandList;
     };
 
-    // Apply theme CSS variables
+    // Apply theme CSS variables and favicon
     useEffect(() => {
         const brand = getBrand(brandId);
         if (brand) {
@@ -129,6 +129,11 @@ export const BrandProvider = ({ children }) => {
                 document.documentElement.style.setProperty(key, value);
             });
             document.title = brand.name;
+            // Update favicon to brand logo
+            if (brand.logo) {
+                const link = document.querySelector("link[rel~='icon']");
+                if (link) link.href = brand.logo;
+            }
         } else {
             document.title = 'Fatih Plastik';
         }
