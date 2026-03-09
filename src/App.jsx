@@ -28,12 +28,19 @@ const BrandGuard = ({ children }) => {
   return children;
 };
 
+// DomainRedirect: if domain maps to a brand, skip brand selection and go to /home
+const DomainRedirect = () => {
+  const { domainBrand } = useBrand();
+  if (domainBrand) return <Navigate to="/home" replace />;
+  return <BrandSelection />;
+};
+
 function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Brand Selection */}
-        <Route path="/" element={<BrandSelection />} />
+        {/* Brand Selection (auto-redirects to /home if domain is mapped) */}
+        <Route path="/" element={<DomainRedirect />} />
 
         {/* Public Routes (require brand) */}
         <Route path="/home" element={<BrandGuard><Layout><Home /></Layout></BrandGuard>} />

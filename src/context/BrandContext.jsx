@@ -4,6 +4,20 @@ import { brandsApi } from '../utils/api';
 
 const BrandContext = createContext(null);
 
+// Domain -> Brand mapping
+const DOMAIN_BRAND_MAP = {
+    'plastime.com.tr': 'fatihplastik',
+    'www.plastime.com.tr': 'fatihplastik',
+    'freegardensaksi.com': 'freegarden',
+    'www.freegardensaksi.com': 'freegarden',
+};
+
+// Detect brand from current hostname
+const detectBrandFromDomain = () => {
+    const hostname = window.location.hostname.toLowerCase();
+    return DOMAIN_BRAND_MAP[hostname] || null;
+};
+
 // Convert API brand to the format used in the app
 const normalizeBrand = (apiBrand) => ({
     id: apiBrand.id,
@@ -33,13 +47,24 @@ function hexToRgbArray(hex) {
 }
 
 export const BrandProvider = ({ children }) => {
+    const domainBrand = detectBrandFromDomain();
+
     const [brandId, setBrandId] = useState(() => {
+        // Domain detection takes priority
+        if (domainBrand) return domainBrand;
         return localStorage.getItem('fabrikaa_brand') || null;
     });
     const [adminBrandId, setAdminBrandId] = useState(() => {
         return localStorage.getItem('fabrikaa_admin_brand') || 'freegarden';
     });
     const [dynamicBrands, setDynamicBrands] = useState(null);
+
+    // If domain is mapped, always enforce the correct brand
+    useEffect(() => {
+        if (domainBrand && brandId !== domainBrand) {
+            setBrandId(domainBrand);
+        }
+    }, [domainBrand]);
 
     // Fetch brands from API on mount
     useEffect(() => {
@@ -143,6 +168,7 @@ export const BrandProvider = ({ children }) => {
             setAdminBrand,
             getAllBrands,
             refreshBrands,
+            domainBrand,
         }}>
             {children}
         </BrandContext.Provider>
