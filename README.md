@@ -1,28 +1,28 @@
 # digital-catalog
 
-**Interactive virtual showroom + product catalog.** Customers walk through a 360° panorama of the showroom, click hotspots on real products to open the catalog entry, and export a quote PDF — without leaving the page.
+Interactive virtual showroom and product catalog. Customers walk through a 360 degree panorama of the showroom in their browser, click on real products to see the catalog entry, and build a quote PDF without leaving the page.
 
-Built for industrial manufacturers (originally codename "fabrikaa") who used to demo their catalog as a stack of PDFs and lose attention by page 3.
+Originally built for an industrial manufacturer (project codename "fabrikaa") that wanted to replace stacks of PDF catalogs with something customers actually look at.
 
 ## What it does
 
-- **360° showroom tour** powered by [Photo Sphere Viewer](https://photo-sphere-viewer.js.org/). Multiple linked rooms, each room a separate panorama, with virtual-tour navigation between them.
-- **Product hotspots** — markers on the panorama open a side panel with the product spec, photo, and CTA.
-- **Catalog browser** — flat list view for users who skip the tour.
-- **Quote builder + PDF export** via jsPDF + jsPDF-AutoTable.
-- **Admin-editable content** through the Express + MongoDB backend.
+- **360 degree showroom tour** using Photo Sphere Viewer. Multiple rooms, each one a separate panorama, linked together so the user can walk from one to the next.
+- **Clickable product hotspots** placed on the panorama. Clicking one opens a side panel with the product spec, photos, and a button to add it to the quote.
+- **Catalog browser** as a flat list for users who skip the tour.
+- **Quote builder** that exports a PDF (jsPDF + jspdf-autotable).
+- **Admin panel** so the catalog and rooms can be edited without touching code.
 
-## Tech Stack
+## Tech stack
 
-**Frontend** React 19 · Vite 7 · React Router 7 · Framer Motion · Lucide icons · Photo Sphere Viewer (core + markers + virtual-tour plugins) · jsPDF + jspdf-autotable
+**Frontend** React 19, Vite 7, React Router 7, Framer Motion, Lucide icons, Photo Sphere Viewer (core, markers, virtual-tour plugins), jsPDF.
 
-**Backend (`server/`)** Node + Express · Mongoose (MongoDB) · middleware-based auth · REST routes for products / rooms / quotes
+**Backend (`server/`)** Node, Express, MongoDB with Mongoose. REST routes for products, rooms, and quotes. Authentication middleware.
 
-**Image pipeline** Sharp for panorama processing
+**Image pipeline** Sharp for panorama processing.
 
-**Infra** Dockerfile + docker-compose + nginx reverse proxy
+**Infrastructure** Dockerfile, docker-compose, nginx as a reverse proxy.
 
-## Quick start
+## Run it
 
 ```bash
 git clone https://github.com/sucreistaken/digital-catalog.git
@@ -30,43 +30,43 @@ cd digital-catalog
 
 # Frontend
 npm install
-npm run dev            # vite :5173
+npm run dev                # Vite on :5173
 
-# Backend (separate terminal)
+# Backend, in another terminal
 cd server
-cp .env.example .env   # fill MONGODB_URI, JWT_SECRET, etc.
+cp .env.example .env       # add MONGODB_URI, JWT_SECRET, etc.
 npm install
-npm start              # api :4000
+npm start                  # API on :4000
 ```
 
-Or the all-in-one Docker route:
+Or run the full stack with Docker:
 
 ```bash
 docker compose up -d
 # nginx serves the built frontend on :80 and proxies /api to the backend
 ```
 
-## Project structure
+## Project layout
 
 ```
 src/
-  pages/         Showroom (panorama), catalog, product detail, quote builder
-  components/    PanoramaViewer wrapper, ProductCard, QuoteCart, etc.
-  context/       Cart + selected-product state
-  data/          Static product/room seed data (for demo / no-backend mode)
+  pages/         Showroom, catalog, product detail, quote builder
+  components/    PanoramaViewer, ProductCard, QuoteCart, etc.
+  context/       Cart and selected-product state
+  data/          Static product/room data for the demo/no-backend mode
   utils/         PDF generation helpers
 server/
   routes/        /api/products, /api/rooms, /api/quotes
   models/        Mongoose schemas
   middleware/    auth, validation
 public/
-  panoramas/     Source 360° images
+  panoramas/     360 degree images
 ```
 
 ## Notes
 
-The showroom expects equirectangular panoramas (2:1 aspect, ideally 8000×4000+). Hotspots are positioned by yaw/pitch in `src/data/` or via the admin panel.
+Panoramas should be equirectangular (2:1 ratio, 8000x4000 px works well). Hotspot positions are yaw/pitch values stored in `src/data/` or set through the admin panel.
 
 ## Status
 
-MVP shipped; in iteration with the launch customer. Roadmap: WebXR mode for VR headsets, automatic panorama stitching from phone-captured 360s.
+MVP shipped to the first customer; in iteration. Planned next: WebXR mode for VR headsets, automatic stitching from phone-captured 360 degree images.
