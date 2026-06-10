@@ -18,8 +18,8 @@ const Home = () => {
             {/* Hero Section */}
             <section className="hero">
                 <div className="hero-video-bg">
-                    <video autoPlay muted loop playsInline>
-                        <source src="https://assets.mixkit.co/videos/14631/14631-720.mp4" type="video/mp4" />
+                    <video autoPlay muted loop playsInline preload="metadata" poster="/fatih-plastik-hero-poster.jpg">
+                        <source src="/fatih-plastik-hero.mp4" type="video/mp4" />
                     </video>
                     <div className="hero-video-overlay" />
                 </div>

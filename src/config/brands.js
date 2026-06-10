@@ -1,12 +1,12 @@
 import freegardenLogo from '../assets/freegarden-logo.png';
-import fatihplastikLogo from '../assets/fatihplastik-logo.jpg';
+import fatihplastikLogo from '../assets/plastime-logo.png';
 
 const brands = {
     freegarden: {
         id: 'freegarden',
         name: 'FreeGarden',
-        tagline: 'Premium Plastic Solutions',
-        taglineTr: 'Premium Plastik Çözümler',
+        tagline: 'Pots, garden & outdoor living products',
+        taglineTr: 'Saksı, bahçe ve yaşam alanı ürünleri',
         email: 'info@freegarden.com',
         website: 'www.freegardensaksi.com',
         phone: '+90 500 123 45 67',
@@ -23,9 +23,9 @@ const brands = {
     },
     fatihplastik: {
         id: 'fatihplastik',
-        name: 'Fatih Plastik',
-        tagline: 'Industrial Plastic Solutions',
-        taglineTr: 'Endüstriyel Plastik Çözümler',
+        name: 'Plastime',
+        tagline: 'Houseware & plastic kitchen products',
+        taglineTr: 'Ev gereçleri ve plastik mutfak ürünleri',
         email: 'info@fatihplastik.com',
         website: 'www.plastime.com.tr',
         phone: '+90 500 765 43 21',

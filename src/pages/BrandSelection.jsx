@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { useBrand, getDomainForBrand } from '../context/BrandContext';
@@ -6,27 +6,13 @@ import { useLanguage } from '../context/LanguageContext';
 import { trackBrandSelect } from '../utils/analytics';
 import './BrandSelection.css';
 
-const SLIDESHOW_IMAGES = [
-    'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80',
-    'https://images.unsplash.com/photo-1565043666747-69f6646db940?w=1920&q=80',
-    'https://images.unsplash.com/photo-1504917595217-d4dc5ebb6da8?w=1920&q=80',
-    'https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1920&q=80',
-];
-
 const BrandSelection = () => {
     const navigate = useNavigate();
     const { setBrand, getAllBrands, domainBrand } = useBrand();
     const { language } = useLanguage();
-    const [currentSlide, setCurrentSlide] = useState(0);
+    const tr = language === 'tr';
 
     const brands = getAllBrands();
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentSlide((prev) => (prev + 1) % SLIDESHOW_IMAGES.length);
-        }, 6000);
-        return () => clearInterval(interval);
-    }, []);
 
     const handleSelect = (brandId) => {
         trackBrandSelect(brandId);
@@ -42,15 +28,19 @@ const BrandSelection = () => {
 
     return (
         <div className="brand-selection">
-            {/* Background slideshow */}
+            {/* Background video */}
             <div className="brand-slideshow">
-                {SLIDESHOW_IMAGES.map((src, i) => (
-                    <div
-                        key={i}
-                        className={`brand-slide ${i === currentSlide ? 'active' : ''}`}
-                        style={{ backgroundImage: `url(${src})` }}
-                    />
-                ))}
+                <video
+                    className="brand-video"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    poster="/fatih-plastik-hero-poster.jpg"
+                >
+                    <source src="/fatih-plastik-hero.mp4" type="video/mp4" />
+                </video>
                 <div className="brand-slideshow-overlay" />
             </div>
 
@@ -59,7 +49,7 @@ const BrandSelection = () => {
                 <div className="brand-selection-header">
                     <h1 className="brand-selection-title">Fatih Plastik</h1>
                     <p className="brand-selection-subtitle">
-                        {language === 'tr' ? 'Markamizi secin' : 'Select our brand'}
+                        {tr ? 'Hangi ürün grubunu incelemek istersiniz?' : 'Which product group would you like to explore?'}
                     </p>
                 </div>
                 <div className="brand-cards">
@@ -81,7 +71,7 @@ const BrandSelection = () => {
                             </div>
                             <h2 className="brand-card-name">{brand.name}</h2>
                             <p className="brand-card-tagline">
-                                {language === 'tr' ? brand.taglineTr : brand.tagline}
+                                {tr ? brand.taglineTr : brand.tagline}
                             </p>
                             <div className="brand-card-accent" />
                         </button>
@@ -89,7 +79,7 @@ const BrandSelection = () => {
                 </div>
                 <Link to="/showroom" className="showroom-hint">
                     <Eye size={16} />
-                    {language === 'tr' ? 'Showroom\'a goz at' : 'Browse Showroom'}
+                    {tr ? "Showroom'a göz at" : 'Browse Showroom'}
                 </Link>
             </div>
         </div>

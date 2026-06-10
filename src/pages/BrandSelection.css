@@ -36,6 +36,15 @@
     opacity: 1;
 }
 
+.brand-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 @keyframes slideZoom {
     0% {
         transform: scale(1);
@@ -68,44 +77,45 @@
 /* Header */
 .brand-selection-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 }
 
 .brand-selection-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #ffffff;
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.375rem;
     letter-spacing: -0.02em;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .brand-selection-subtitle {
-    font-size: 1.125rem;
+    font-size: 1rem;
     color: rgba(255, 255, 255, 0.7);
     margin: 0;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Brand cards grid */
+/* Brand cards grid - compact cluster so the showreel stays the hero */
 .brand-cards {
     display: flex;
-    gap: 2rem;
-    max-width: 800px;
+    gap: 2.75rem;
+    max-width: 600px;
     width: 100%;
 }
 
-/* Card - glassmorphism over slideshow */
+/* Card - subtle dark veil, no blur so the video stays crisp behind it */
 .brand-card {
     flex: 1;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 20px;
-    padding: 3rem 2rem;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 14px;
+    padding: 1.25rem 0.875rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                background 0.4s ease,
+                border-color 0.4s ease,
+                box-shadow 0.4s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -118,44 +128,44 @@
 }
 
 .brand-card:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-    transform: translateY(-4px);
+    background: rgba(0, 0, 0, 0.30);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.22);
+    transform: translateY(-5px);
 }
 
-/* Card logo */
+/* Card logo - hero of the card, kept large */
 .brand-card-logo {
-    height: 80px;
+    height: 84px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .brand-card-logo img {
-    max-height: 80px;
-    max-width: 200px;
+    max-height: 84px;
+    max-width: 210px;
     object-fit: contain;
 }
 
 .brand-card-text-logo {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 800;
     letter-spacing: -0.02em;
 }
 
-/* Card text */
+/* Card text - quiet, secondary to the logo */
 .brand-card-name {
-    font-size: 1.5rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: #ffffff;
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.125rem;
 }
 
 .brand-card-tagline {
-    font-size: 0.9375rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
     margin: 0;
 }
 
@@ -217,16 +227,16 @@
     }
 
     .brand-card {
-        padding: 2.5rem 1.5rem;
+        padding: 2rem 1.5rem;
     }
 
     .brand-card-logo {
-        height: 60px;
-        margin-bottom: 1rem;
+        height: 64px;
+        margin-bottom: 0.625rem;
     }
 
     .brand-card-logo img {
-        max-height: 60px;
+        max-height: 64px;
     }
 
     .brand-card-name {
@@ -258,7 +268,7 @@
     }
 
     .brand-card {
-        padding: 2rem 1.25rem;
+        padding: 1.75rem 1.25rem;
         border-radius: 16px;
     }
 
