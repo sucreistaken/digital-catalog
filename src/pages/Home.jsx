@@ -49,7 +49,7 @@ const Home = () => {
                         {features.map((feature, idx) => (
                             <div key={idx} className="feature-card">
                                 <div className="feature-icon">
-                                    <feature.icon size={28} />
+                                    <feature.icon size={34} />
                                 </div>
                                 <h3>{feature.title}</h3>
                                 <p>{feature.description}</p>

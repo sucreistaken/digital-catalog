@@ -94,8 +94,10 @@ const PublicLayout = ({ children }) => {
 
                 <div className="nav-actions">
                     <button className="brand-switch-nav" onClick={handleSwitchBrand}>
-                        <ArrowLeftRight size={14} />
-                        <span className="brand-switch-label">{otherBrand?.name}</span>
+                        <ArrowLeftRight size={15} />
+                        <span className="brand-switch-label">
+                            {language === 'tr' ? `${otherBrand?.name}'a Geç` : `Switch to ${otherBrand?.name}`}
+                        </span>
                     </button>
                     <LanguageSwitcher />
                     <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
