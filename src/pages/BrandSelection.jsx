@@ -60,7 +60,7 @@ const BrandSelection = () => {
                             onClick={() => handleSelect(brand.id)}
                             style={{ '--brand-accent': brand.theme['--color-primary'] }}
                         >
-                            <div className="brand-card-logo">
+                            <div className={`brand-card-logo${brand.id === 'freegarden' ? ' brand-card-logo--plate' : ''}`}>
                                 {brand.logo ? (
                                     <img src={brand.logo} alt={brand.name} />
                                 ) : (

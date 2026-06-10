@@ -149,6 +149,19 @@
     object-fit: contain;
 }
 
+/* White plate only for logos that need a light background (e.g. FreeGarden) */
+.brand-card-logo--plate {
+    height: auto;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0.875rem 1.25rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.brand-card-logo--plate img {
+    max-height: 60px;
+}
+
 .brand-card-text-logo {
     font-size: 1.75rem;
     font-weight: 800;
