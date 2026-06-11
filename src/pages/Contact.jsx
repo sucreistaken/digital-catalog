@@ -18,30 +18,30 @@ const Contact = () => {
 
                 <div className="contact-grid">
                     {/* Contact Cards */}
-                    <a href="tel:+905001234567" className="contact-card-lg">
+                    <a href={`tel:${(brand?.phone || '+90 549 207 44 44').replace(/\s/g, '')}`} className="contact-card-lg">
                         <div className="card-icon">
                             <Phone size={32} />
                         </div>
                         <h3>{t('callUs')}</h3>
-                        <p className="contact-value">+90 500 123 45 67</p>
+                        <p className="contact-value">{brand?.phone || '+90 549 207 44 44'}</p>
                         <span className="card-hint">Mon - Sat, 9:00 - 18:00</span>
                     </a>
 
-                    <a href="https://wa.me/905001234567" target="_blank" rel="noopener" className="contact-card-lg whatsapp">
+                    <a href={`https://wa.me/${brand?.whatsapp || '905492074444'}`} target="_blank" rel="noopener" className="contact-card-lg whatsapp">
                         <div className="card-icon">
                             <MessageCircle size={32} />
                         </div>
                         <h3>{t('whatsapp')}</h3>
-                        <p className="contact-value">+90 500 123 45 67</p>
+                        <p className="contact-value">{brand?.phone || '+90 549 207 44 44'}</p>
                         <span className="card-hint">Fast response</span>
                     </a>
 
-                    <a href={`mailto:${brand?.email || 'info@freegarden.com'}`} className="contact-card-lg">
+                    <a href={`mailto:${brand?.email || 'export@plastime.com.tr'}`} className="contact-card-lg">
                         <div className="card-icon">
                             <Mail size={32} />
                         </div>
                         <h3>{t('emailUs')}</h3>
-                        <p className="contact-value">{brand?.email || 'info@freegarden.com'}</p>
+                        <p className="contact-value">{brand?.email || 'export@plastime.com.tr'}</p>
                         <span className="card-hint">We reply within 24 hours</span>
                     </a>
 
